@@ -273,7 +273,8 @@
         <rect class="growx" x="550" y="170" width="414" height="64" fill="#B8511A"/>
         <rect class="growx" x="966" y="170" width="186" height="64" fill="#A02C7C"/>
         <text x="20" y="212" font-size="26" font-weight="600" fill="#28688E">cache read 48%</text>
-        <text x="570" y="212" font-size="26" font-weight="600" fill="#fff">cache write 36%</text>
+        <text x="570" y="203" font-size="26" font-weight="600" fill="#fff">cache write 36%</text>
+        <text x="570" y="224" font-size="14" fill="#fff">your prompt, tool results, the model's previous answer</text>
         <text x="1059" y="212" font-size="24" font-weight="600" fill="#fff" text-anchor="middle">output 16%</text>
         <text x="1152" y="258" font-size="17" fill="#4E5A66" text-anchor="end">answers, thinking, tool calls</text>
       </g>
@@ -306,21 +307,22 @@
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="rise" data-step="1">
           <div class="ite">\(\text{ITE} = \text{in} + 1.25\,w_{5m} + 2\,w_{1h} + 0.1\,\text{read} + 5\,\text{out}\)</div>
-          <p class="symleg"><b>ITE</b> = input-token equivalents: how many fresh input tokens cost the same. \(w_{5m}, w_{1h}\) = tokens written to the 5-minute / 1-hour cache.</p>
+          <p class="symleg"><b>ITE</b> = input-token equivalents: how many fresh input tokens cost the same. \(w_{5m}, w_{1h}\) = tokens written to the 5-minute / 1-hour cache. \(\text{in}\) = input that is not cached, close to 0 in Claude Code.</p>
         </div>
         <div class="card ex rise" data-step="2">
           <h3>One request at 150k context <span class="tag ill">illustrative split</span></h3>
           <div class="row"><span>148k re-read &times; 0.1</span><b>14.8k</b></div>
-          <div class="row"><span>2k new, written &times; 2</span><b>4.0k</b></div>
+          <div class="row"><span>2k new since the last request, written &times; 2</span><b>4.0k</b></div>
           <div class="row"><span>1k answer &times; 5</span><b>5.0k</b></div>
           <div class="row tot"><span>this request</span><b>23.8k ITE</b></div>
         </div>
+        <p class="symleg rise" data-step="2">Current models (Opus 5.5, Sonnet 5.5) read at 0.05&times;: re-reads cost half of what is shown here.</p>
       </div>
     </div>
   </div>
   <p class="home">Re-reading is cheap, but not free; writing is 20&times; a read; output is 50&times; a read.</p>
   <aside class="notes">
-    <p>Say: Everything in this talk is in one unit, ITE: "how many fresh input tokens would cost the same". Claude Code caches almost everything, so fresh input is only the yardstick. Main sessions keep the cache 1 hour (write 2&times;), subagents 5 minutes (1.25&times;).</p>
+    <p>Say: Everything in this talk is in one unit, ITE: "how many fresh input tokens would cost the same". Claude Code caches almost everything, so fresh input is only the yardstick. Main sessions keep the cache 1 hour (write 2&times;), subagents 5 minutes (1.25&times;). The deck uses the standard 0.1x for reads; Opus 5.5 and Sonnet 5.5 read at 0.05x, so re-reads cost half and every conclusion holds.</p>
     <p>Sources: Anthropic prompt-caching docs (read 0.1&times;, 5-min write 1.25&times;, 1-hour write 2&times;); output 5&times; = Opus output/input price ratio, bin/ai_lib/llm_prices.py (Opus 5.5: $4 in, $20 out; its read is $0.20 = 0.05&times;, cheaper than the standard 0.1&times;). Main = 1-hour, subagent = 5-minute cache: transcript check 2026-11-10 (relay deck appendix). Example split 148k/2k/1k is illustrative (relay deck slide 5).</p>
   </aside>
 </section>
