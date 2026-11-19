@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 import urllib.request
@@ -24,7 +25,7 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
-DEFAULT_URL = "https://decide.dom42.space/api/relay-cost"
+DEFAULT_URL = os.environ.get("RELAY_COST_URL", "")
 TZ = ZoneInfo("Europe/Zurich")
 KINDS = ("tok_in", "tok_cw", "tok_cr", "tok_out")
 LABELS = {
@@ -44,7 +45,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-u",
         "--url",
         default=DEFAULT_URL,
-        help=f"relay-cost API URL (default {DEFAULT_URL})",
+        help="relay-cost API URL (default: environment variable RELAY_COST_URL)",
     )
     p.add_argument(
         "-f", "--file", help="read a saved API response instead of fetching the URL"
@@ -66,7 +67,9 @@ def load(url: str, path: str | None) -> dict[str, Any]:
         with open(path, encoding="utf-8") as fh:
             data: dict[str, Any] = json.load(fh)
         return data
-    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 (fixed https URL)
+    if not url:
+        raise ValueError("no URL: pass -u/--url, set RELAY_COST_URL or use -f/--file")
+    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 (operator-given URL)
         data = json.loads(resp.read().decode("utf-8"))
     return data
 
