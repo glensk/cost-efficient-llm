@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Best practices for cost-efficient LLM use</title>
+<!-- deck v1.0, 2026-11-19, for SDSC 2026-11-20. Base CSS/JS: relay-research/slides (mydotfiles) and coding-agents-talk. Numbers: scripts/relay_cost_stats.py (decide relay-cost API), relay-research README + 2026-11-02 studies, startup-context.py. Keys: arrows/space, A = all steps, N = notes, #<slide> or #<slide>.<step>. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<script defer src="vendor/katex/katex.min.js"></script>
+<script defer src="vendor/katex/auto-render.min.js"></script>
+<style>
+  :root{
+    --paper:#E9EDF0; --card:#FFFFFF; --ink:#131A20; --ink2:#4E5A66; --ink3:#7E8A96;
+    --rule:#C1CBD3; --hot:#B8511A; --hot-tint:#F0DDCE; --cold:#28688E; --cold-tint:#D4E3EC;
+    --out:#A02C7C; --out-tint:#EED6E6; --green:#0A8A72; --red:#A6362B; --gold:#9A7B10; --gold-tint:#EFE6C6;
+    --sans:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+    --cond:"IBM Plex Sans Condensed","IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+    --mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
+  }
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);margin:0;height:100vh;overflow:hidden}
+  .stage{position:fixed;top:50%;left:50%;width:1280px;height:720px;transform-origin:50% 50%;
+    background:var(--paper);display:grid;grid-template-rows:1fr 40px;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+  .frame{position:relative;overflow:hidden}
+  .slide{position:absolute;inset:0;padding:32px 64px 22px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box;
+    opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .35s ease,transform .45s ease,visibility 0s .35s}
+  .slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease,transform .45s ease}
+  .eyebrow{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink3);margin:0 0 8px;display:flex;align-items:center;gap:10px}
+  .eyebrow b{color:var(--hot);font-weight:600}
+  .eyebrow .tno{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;
+    background:var(--hot);color:#fff;font-family:var(--cond);font-size:18px;letter-spacing:0;font-weight:700}
+  .eyebrow svg.ic{width:26px;height:26px;color:var(--hot)}
+  h1{font-family:var(--cond);font-weight:700;font-size:76px;line-height:.98;letter-spacing:-.02em;margin:0}
+  h2{font-family:var(--cond);font-weight:700;font-size:46px;line-height:1.04;letter-spacing:-.015em;margin:0}
+  h1 em,h2 em{font-style:normal;color:var(--hot)}
+  .lead{font-size:21px;color:var(--ink2);margin:10px 0 0;max-width:62ch;line-height:1.4}
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;justify-content:center}
+  p,li{font-size:19px;line-height:1.4;color:var(--ink2)}
+  p{margin:0}
+  ul{margin:0;padding-left:22px}
+  li{margin:0 0 7px}
+  b,strong{color:var(--ink)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--card);border:1px solid var(--rule);padding:0 5px;color:var(--ink)}
+  .katex{font-size:1.06em}
+  svg text{font-family:var(--sans)}
+  svg .mono{font-family:var(--mono)}
+  svg .cond{font-family:var(--cond);font-weight:700}
+
+  /* take-home bar */
+  .home{display:flex;align-items:center;gap:18px;background:var(--ink);color:#fff;padding:13px 24px 13px 20px;
+    border-left:10px solid var(--hot);font-family:var(--cond);font-weight:600;font-size:25px;line-height:1.22;flex-shrink:0}
+  .home::before{content:"take home";font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#F3B48C;writing-mode:horizontal-tb;white-space:nowrap;border-right:1px solid #3A4651;padding-right:16px}
+  .home em{font-style:normal;color:#F3B48C}
+  .home code{background:#26313B;border-color:#3A4651;color:#fff}
+
+  /* tags for model / illustrative numbers */
+  .tag{display:inline-block;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+    padding:2px 8px;border:1.5px solid var(--gold);color:var(--gold);background:var(--card);vertical-align:middle}
+  .tag.ill{border-color:var(--ink3);color:var(--ink2)}
+
+  /* fragments */
+  [data-step]{opacity:0;transition:opacity .5s ease}
+  [data-step].on{opacity:1}
+  .rise[data-step]{transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
+  .rise[data-step].on{transform:none}
+  .grow{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+  .on>.grow,.on>g>.grow,.grow.on,.on .rung>.grow{transform:scaleY(1)}
+  .growx{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0);transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .on>.growx,.on>g>.growx,.growx.on{transform:scaleX(1)}
+  .draw{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1)}
+  .on>.draw,.draw.on{stroke-dashoffset:0}
+  .draw.slow{transition-duration:2.4s}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none!important;animation:none!important}
+  }
+
+  /* generic pieces */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+  .card{background:var(--card);border:1px solid var(--rule);padding:16px 20px}
+  .card h3,.kick{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--hot);margin:0 0 8px}
+  .acts{list-style:none;padding:0;margin:0}
+  .acts li{position:relative;padding-left:30px;margin:0 0 9px;color:var(--ink)}
+  .acts li::before{content:"";position:absolute;left:0;top:7px;width:16px;height:16px;border-radius:50%;background:var(--hot)}
+  .acts li::after{content:"";position:absolute;left:5px;top:10px;width:4px;height:7px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+  .big{font-family:var(--cond);font-weight:700;color:var(--hot);line-height:1}
+  .legend{font-family:var(--mono);font-size:15px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center}
+  .legend i{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:7px;border:1.5px solid transparent}
+  .sw-read{background:var(--cold-tint);border-color:var(--cold)!important}
+  .sw-new{background:var(--hot)}
+  .sw-out{background:var(--out)}
+  .sw-w5{background:var(--gold)}
+  .sw-in{background:var(--ink3)}
+
+  /* ruler */
+  .ruler{border-top:1px solid var(--rule);padding:0 64px;display:flex;align-items:center;gap:18px;background:var(--paper);
+    font-family:var(--mono);font-size:12px;color:var(--ink3);letter-spacing:.1em;z-index:6}
+  .track{position:relative;flex:1;height:6px;background:var(--rule)}
+  .track .span{position:absolute;top:0;left:0;height:6px;background:var(--hot);transition:width .3s ease}
+  .count{font-variant-numeric:tabular-nums;color:var(--ink2)}
+  .dots{display:flex;gap:5px;min-width:60px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:var(--rule)}
+  .dots i.on{background:var(--hot)}
+  .notes{position:absolute;left:64px;right:64px;bottom:8px;background:var(--card);border:1px solid var(--rule);box-shadow:0 6px 30px rgba(0,0,0,.15);
+    padding:12px 16px;font-size:14px;line-height:1.5;color:var(--ink2);display:none;z-index:8}
+  body.show-notes .slide.active .notes{display:block}
+  .notes p{font-size:14.5px;margin:0 0 6px;line-height:1.45}
+
+  /* 1 title */
+  #s1{justify-content:center;gap:0}
+  #s1 h1{margin:4px 0 24px;font-size:70px}
+  .hook{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:20px}
+  .hook div{border-top:4px solid var(--ink);padding-top:8px}
+  .hook>div>b{display:block;font-family:var(--cond);font-size:112px;line-height:1;color:var(--hot);letter-spacing:-.02em}
+  .hook div:nth-child(2) b{color:var(--cold)}
+  .hook div:nth-child(3) b{color:var(--green)}
+  .hook>div>span{display:block;font-size:24px;color:var(--ink2);line-height:1.35;margin-top:10px}
+  .hook>div>span b{color:var(--ink);font-weight:600}
+  .seat{font-size:22px;color:var(--ink);border-left:6px solid var(--cold);padding:4px 0 4px 16px;background:linear-gradient(90deg,var(--cold-tint),transparent 70%)}
+  .prev{font-family:var(--mono);font-size:15px;color:var(--ink3);margin-top:16px}
+  .prev a{color:var(--cold)}
+
+  /* 2 tokens */
+  .tiles3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .tiles3 div{background:var(--card);border:1px solid var(--rule);border-top:4px solid var(--cold);padding:12px 18px}
+  .tiles3 b{display:block;font-family:var(--cond);font-size:46px;line-height:1.05;color:var(--ink)}
+  .tiles3 span{display:block;font-size:18px;color:var(--ink2);margin-top:2px}
+
+  /* 3 ladder */
+  .ladder{display:flex;align-items:flex-end;gap:22px;height:330px;position:relative;padding:0 6px;border-bottom:2px solid var(--ink)}
+  .ladder .rung{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .ladder .bar{width:100%;transform-origin:50% 100%}
+  .ladder .mul{font-family:var(--cond);font-weight:700;font-size:54px;line-height:1;margin-bottom:6px}
+  .ladder .lab{font-size:18px;color:var(--ink2);text-align:center;line-height:1.25;position:absolute;bottom:-56px;width:150px}
+  .ladder .rung{position:relative}
+  .yard{position:absolute;left:0;right:0;border-top:2px dashed rgba(19,26,32,.55);z-index:2}
+  .ladder .mul{position:relative;z-index:3;background:var(--paper);padding:0 6px}
+  .yard span{position:absolute;right:12px;top:-25px;font-family:var(--mono);font-size:15px;font-weight:600;color:#fff;padding:0 4px}
+  .ite{background:var(--card);border:3px solid var(--hot);padding:12px 16px;text-align:center;font-size:24px}
+  .ite .katex{font-size:1.02em}
+  .symleg{font-size:17px;color:var(--ink2);line-height:1.45;margin-top:8px}
+  .ex{font-size:19px}
+  .ex .row{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding:5px 0}
+  .ex .row b{font-family:var(--mono);font-weight:500}
+  .ex .tot{font-weight:600;color:var(--ink);border-bottom:0}
+
+  /* 7 overview */
+  .grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .tile{background:var(--card);border:1px solid var(--rule);padding:14px 16px;display:grid;grid-template-columns:42px 1fr 40px;gap:4px 14px;align-items:center;align-content:center;min-height:86px;box-sizing:border-box;position:relative;overflow:hidden}
+  .tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--hot)}
+  .tile .no{font-family:var(--cond);font-weight:700;font-size:42px;color:var(--hot);line-height:1;grid-row:span 2}
+  .tile .t{font-family:var(--cond);font-weight:700;font-size:24px;line-height:1.1;color:var(--ink)}
+  .tile .v{font-family:var(--mono);font-size:17px;color:var(--ink2);grid-column:2}
+  .tile svg.ic{grid-row:1/span 2;grid-column:3;width:36px;height:36px;color:var(--cold)}
+  .tile.fin{background:#131A20}
+  .tile.fin .t{color:#fff}
+  .tile.fin .v{color:#C7D0D8}
+
+  /* 8 start lean */
+  .tbar{display:flex;align-items:stretch;border:2px solid var(--ink);background:var(--card);height:96px;position:relative}
+  .tbar>div{min-width:0;box-sizing:border-box;padding:8px 12px;border-right:1px solid var(--ink);overflow:hidden}
+  .tbar>div:last-child{border-right:0}
+  .tbar b{display:block;font-size:19px;color:var(--ink);white-space:nowrap}
+  .tbar span{display:block;font-size:17px;color:var(--ink2);white-space:nowrap}
+  .tbar .warm{background:var(--cold-tint)}
+  .tbar .wr{background:var(--hot-tint)}
+  .tbar .pr{background:var(--hot)}
+  .scale{font-family:var(--mono);font-size:15px;color:var(--ink3);display:flex;justify-content:space-between;margin-top:4px}
+  .duo{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:22px;align-items:stretch}
+  .stat{background:var(--card);border:1px solid var(--rule);border-top:4px solid var(--hot);padding:12px 16px}
+  .stat b{display:block;font-family:var(--cond);font-size:44px;line-height:1.02;color:var(--hot)}
+  .stat span{display:block;font-size:17.5px;color:var(--ink2);line-height:1.35;margin-top:4px}
+  .stat span.tag{display:inline-block;font-size:13px;color:var(--gold);margin-top:8px}
+  .stat.cold{border-top-color:var(--cold)}
+  .stat.cold b{color:var(--cold)}
+
+  /* 9 stable first */
+  .ba{display:grid;grid-template-columns:90px 1fr 120px;gap:14px;align-items:center}
+  .ba .lab{font-family:var(--mono);font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+  .ba .cost{font-family:var(--cond);font-weight:700;font-size:40px;text-align:right}
+  .ba .tbar{height:66px}
+  .ba .tbar>div{display:flex;flex-direction:column;justify-content:center;transition:background .8s ease}
+  .cp{box-shadow:inset -6px 0 0 var(--green)}
+  .cpin{position:absolute;top:-26px;transform:translateX(-100%);font-family:var(--mono);font-size:15px;color:var(--green);white-space:nowrap}
+  .mini{border-collapse:collapse;font-size:19px;width:100%}
+  .mini td{padding:6px 10px;border-bottom:1px solid var(--rule);color:var(--ink2)}
+  .mini td.n{font-family:var(--mono);color:var(--ink);text-align:right}
+
+  /* 12 feed sparingly */
+  #s12 li{font-size:23px;margin-bottom:14px}
+  #s12 .card{padding:26px 32px 14px}
+  #s12 h3{font-size:16px;margin-bottom:16px}
+  #s12 .acts li{padding-left:34px}
+  #s12 .acts li::before{top:9px;width:20px;height:20px}
+  #s12 .acts li::after{top:13px;left:7px}
+  #s12 .ok .acts li::before{background:var(--green)}
+
+  /* 18 finale */
+  .slide.dark{background:radial-gradient(120% 90% at 50% 20%,#1C2730 0%,#0E1418 70%);color:#E9EDF0}
+  .slide.dark h2{color:#fff}
+  .slide.dark .eyebrow{color:#8D9AA6}
+  .slide.dark p,.slide.dark li{color:#C7D0D8}
+  .slide.dark b{color:#fff}
+  .slide.dark .home{background:#E9EDF0;color:var(--ink)}
+  .slide.dark .home::before{color:var(--hot);border-right-color:var(--rule)}
+  .slide.dark .home em{color:var(--hot)}
+  .spark{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .ball{offset-rotate:0deg}
+
+  /* 17 remember */
+  .three{display:flex;flex-direction:column;gap:6px}
+  .three div{font-family:var(--cond);font-weight:700;font-size:84px;line-height:1.02;letter-spacing:-.02em}
+  .three div i{font-style:normal;font-family:var(--mono);font-size:22px;color:var(--ink3);font-weight:500;display:inline-block;width:66px}
+  .three div em{font-style:normal;color:var(--hot)}
+  .check{font-size:30px;font-family:var(--cond);font-weight:600;color:var(--ink);margin-top:20px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i1" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h5"/></g></symbol>
+    <symbol id="i2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 13 9 5 9-5" opacity=".55"/></g></symbol>
+    <symbol id="i3" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.6 5 5.6 5 11a5 5 0 0 1-10 0c0-2.6 1.4-4 2-6 .9 1 1.6 2.3 1.5 3.8C12 8.6 12.3 5.4 12 2z"/></symbol>
+    <symbol id="i4" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></g></symbol>
+    <symbol id="i5" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 4h18l-7 8v6l-4 2v-8z"/></symbol>
+    <symbol id="i6" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5 5 16.5M12 11.5l7 5"/></g></symbol>
+    <symbol id="i7" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17 17 3"/><path d="M14 3h3v3"/><path d="M7 21h14M17 17l4 4-4 4" transform="translate(0 -4)"/></g></symbol>
+    <symbol id="i8" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l4-6"/><circle cx="12" cy="17" r="1.6" fill="currentColor"/></g></symbol>
+    <symbol id="i9" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l13 13M20 4 7 17"/><path d="M15 19l4-4M5 15l4 4"/></g></symbol>
+    <symbol id="flame" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5c.7 4 5.6 6.3 5.6 12.2a5.6 5.6 0 0 1-11.2 0c0-2.9 1.6-4.5 2.3-6.7 1 1.1 1.8 2.6 1.7 4.2C12 8.4 12.4 5 12 1.5z"/><path fill="#fff" opacity=".55" d="M12 11c.3 1.8 2.5 2.8 2.5 5.3a2.5 2.5 0 0 1-5 0c0-1.3.7-2 1-3 .5.5.8 1.2.8 1.9.4-1.4.8-2.7.7-4.2z"/></symbol>
+    <symbol id="snow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/><path d="m9.5 3.8 2.5 2 2.5-2M9.5 20.2l2.5-2 2.5 2M4.2 10.5l3-.9-.8-3M19.8 13.5l-3 .9.8 3M4.2 13.5l3 .9-.8 3M19.8 10.5l-3-.9.8-3"/></g></symbol>
+  </defs>
+</svg>
+<div class="stage">
+<div class="frame">
+
+<!-- ================= 1 TITLE ================= -->
+<section class="slide" id="s1">
+  <p class="eyebrow">SDSC &middot; 20 November 2026 &middot; <b>Albert Glensk</b></p>
+  <h1>Best practices for<br><em>cost-efficient</em> LLM use</h1>
+  <div class="hook">
+    <div><b data-count="97" data-fmt="%">97%</b><span>of all tokens are <b>re-reads</b> of context already seen</span></div>
+    <div><b data-count="20" data-fmt="x">20&times;</b><span>the price of answering <b>after the cache went cold</b></span></div>
+    <div><b data-count="4.4" data-fmt="x1">4.4&times;</b><span>cheaper long sessions <b>with relays</b> <span class="tag" style="display:inline-block;margin-top:0">model</span></span></div>
+  </div>
+  <p class="seat">On a flat seat, <b>cost = how fast you eat your usage limit</b>. The arithmetic is identical.</p>
+  <p class="prev">Previous talk: <a href="https://glensk.github.io/coding-agents-talk/">glensk.github.io/coding-agents-talk</a></p>
+  <aside class="notes">
+    <p>Say: You mostly use Claude Code as a chat in the terminal. Today: why the same work can cost 1&times; or 5&times;, and nine habits that keep it at 1&times;. Most of you are on a flat seat, so "cost" means how fast you hit the usage limit: the arithmetic is the same.</p>
+    <p>Sources: 97% = cache-read share of all tokens, decide relay-cost API, 1,765 sessions since 2026-10-20 (scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich). 20&times; = 300k vs 15k ITE for a 150k context (slide 10). 4.4&times; = model of slide 6 (c_0 50k, g 1.82k, to 1M context, relay at 150k, fee 120k): 27.4M vs 6.2M ITE; re-reads and relay fees only.</p>
+  </aside>
+</section>
+
+<!-- ================= 2 WHERE THE TOKENS GO ================= -->
+<section class="slide" id="s2">
+  <header>
+    <p class="eyebrow">02 &middot; <b>where the tokens go</b> &middot; our last 30 days</p>
+    <h2>97% of the tokens are <em>re-reads</em>. They are 58% of the bill.</h2>
+  </header>
+  <div class="body">
+    <svg viewBox="0 0 1152 250" width="1152" height="250" role="img" aria-label="Two stacked bars: share of tokens and share of the bill per token kind.">
+      <g data-step="0">
+        <text x="0" y="22" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">SHARE OF TOKENS</text>
+        <rect class="growx" x="1" y="34" width="1116" height="64" fill="#D4E3EC" stroke="#28688E" stroke-width="2"/>
+        <rect class="growx" x="1118" y="34" width="29" height="64" fill="#B8511A"/>
+        <rect class="growx" x="1147" y="34" width="5" height="64" fill="#A02C7C"/>
+        <text x="20" y="76" font-size="26" font-weight="600" fill="#28688E">cache read 97.0%</text>
+        <text x="1116" y="122" font-size="17" fill="#4E5A66" text-anchor="end">write 2.6% &#183; output 0.4% &#8599;</text>
+      </g>
+      <g data-step="1">
+        <text x="0" y="158" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">SHARE OF THE BILL (ITE)</text>
+        <rect class="growx" x="1" y="170" width="666" height="64" fill="#D4E3EC" stroke="#28688E" stroke-width="2"/>
+        <rect class="growx" x="669" y="170" width="356" height="64" fill="#B8511A"/>
+        <rect class="growx" x="1027" y="170" width="125" height="64" fill="#A02C7C"/>
+        <text x="20" y="212" font-size="26" font-weight="600" fill="#28688E">cache read 58%</text>
+        <text x="689" y="212" font-size="26" font-weight="600" fill="#fff">cache write 31%</text>
+        <text x="1089" y="212" font-size="24" font-weight="600" fill="#fff" text-anchor="middle">out 11%</text>
+      </g>
+    </svg>
+    <div class="tiles3 rise" data-step="2">
+      <div><b data-count="61977" data-fmt="int">61,977</b><span>requests in 1,765 sessions</span></div>
+      <div><b>8.5 billion</b><span>tokens re-read from the cache</span></div>
+      <div><b>~$5,400</b><span>at list price; you pay it in usage limit</span></div>
+    </div>
+  </div>
+  <p class="home">The traffic is re-reads. What you control: what you write into the context, and when the cache expires.</p>
+  <aside class="notes">
+    <p>Say: Almost every token is the model re-reading what it already saw. Re-reads are cheap per token, so by price they are about half. The rest is writing new things into the context, and output.</p>
+    <p>Source: decide relay-cost API, window 2026-10-20 13:17 to 2026-11-19, 1,765 sessions (all kinds: interactive, headless, jobs), 61,977 requests; cache read 8,538M, cache write 226M, output 33.1M, fresh input 0.14M tokens; list-price equivalent $5,401 (API field usd). Bill share in ITE with every write at 2&times; (the API does not split 5-min and 1-hour writes; with 1.25&times; the shares are 66 / 22 / 13%). scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich. Refresh of the 2026-08 talk slide "96% of my tokens are re-read context".</p>
+  </aside>
+</section>
+
+<!-- ================= 3 WHAT A TOKEN COSTS ================= -->
+<section class="slide" id="s3">
+  <header>
+    <p class="eyebrow">03 &middot; <b>what a token costs</b> &middot; relative to fresh input</p>
+    <h2>Reading is cheap. <em>Writing</em> is 20&times; that. <em>Output</em> 50&times;.</h2>
+  </header>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.05fr 1fr;gap:44px;align-items:start">
+      <div style="padding-bottom:58px">
+        <div class="ladder" data-step="0">
+          <div class="yard" style="bottom:56px"><span>1&times; input</span></div>
+          <div class="rung"><div class="mul" style="color:var(--cold)">0.1&times;</div><div class="bar grow" style="height:6px;background:var(--cold)"></div><div class="lab">cache <b>read</b></div></div>
+          <div class="rung"><div class="mul" style="color:var(--gold)">1.25&times;</div><div class="bar grow" style="height:70px;background:var(--gold)"></div><div class="lab">cache write,<br>kept <b>5 min</b></div></div>
+          <div class="rung"><div class="mul" style="color:var(--hot)">2&times;</div><div class="bar grow" style="height:112px;background:var(--hot)"></div><div class="lab">cache write,<br>kept <b>1 hour</b></div></div>
+          <div class="rung"><div class="mul" style="color:var(--out)">5&times;</div><div class="bar grow" style="height:270px;background:var(--out)"></div><div class="lab"><b>output</b><br>(the answer)</div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="rise" data-step="1">
+          <div class="ite">\(\text{ITE} = \text{in} + 1.25\,w_{5m} + 2\,w_{1h} + 0.1\,\text{read} + 5\,\text{out}\)</div>
+          <p class="symleg"><b>ITE</b> = input-token equivalents: how many fresh input tokens cost the same. \(w_{5m}, w_{1h}\) = tokens written to the 5-minute / 1-hour cache.</p>
+        </div>
+        <div class="card ex rise" data-step="2">
+          <h3>One request at 150k context <span class="tag ill">illustrative split</span></h3>
+          <div class="row"><span>148k re-read &times; 0.1</span><b>14.8k</b></div>
+          <div class="row"><span>2k new, written &times; 2</span><b>4.0k</b></div>
+          <div class="row"><span>1k answer &times; 5</span><b>5.0k</b></div>
+          <div class="row tot"><span>this request</span><b>23.8k ITE</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="home">Re-reading is cheap, but not free; writing is 20&times; a read; output is 50&times; a read.</p>
+  <aside class="notes">
+    <p>Say: Everything in this talk is in one unit, ITE: "how many fresh input tokens would cost the same". Claude Code caches almost everything, so fresh input is only the yardstick. Main sessions keep the cache 1 hour (write 2&times;), subagents 5 minutes (1.25&times;).</p>
+    <p>Sources: Anthropic prompt-caching docs (read 0.1&times;, 5-min write 1.25&times;, 1-hour write 2&times;); output 5&times; = Opus output/input price ratio, bin/ai_lib/llm_prices.py (Opus 5.5: $4 in, $20 out; its read is $0.20 = 0.05&times;, cheaper than the standard 0.1&times;). Main = 1-hour, subagent = 5-minute cache: transcript check 2026-11-10 (relay deck appendix). Example split 148k/2k/1k is illustrative (relay deck slide 5).</p>
+  </aside>
+</section>
+
+<!-- ================= 4 EVERY REQUEST RE-SENDS EVERYTHING ================= -->
+<section class="slide" id="s4">
+  <header>
+    <p class="eyebrow">04 &middot; <b>the context</b> &middot; requests and asks</p>
+    <h2>No memory: <em>every request re-sends everything.</em></h2>
+  </header>
+  <div class="body" style="gap:8px">
+    <div class="legend">
+      <span><i class="sw-read"></i>re-sent: cache read 0.1&times;</span>
+      <span><i class="sw-new"></i>new: cache write 2&times;</span>
+      <span><i class="sw-out"></i>output 5&times;</span>
+      <span class="tag ill">sizes illustrative</span>
+    </div>
+    <svg id="stackfig" viewBox="0 0 1152 432" width="1152" height="432" style="flex-shrink:0" role="img" aria-label="Seven requests: each bar re-sends all earlier parts and adds new ones; below, the asks you typed, and the ITE cost of each request."></svg>
+  </div>
+  <p class="home">You type 1 prompt, the agent makes ~25 requests, and each re-reads everything before it.</p>
+  <aside class="notes">
+    <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows.</p>
+    <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm.</p>
+  </aside>
+</section>
+
+<!-- ================= 5 EVERY TOKEN PAYS RENT ================= -->
+<section class="slide" id="s5">
+  <header>
+    <p class="eyebrow">05 &middot; <b>every token pays rent</b></p>
+    <h2>A token is written once, then <em>paid again on every request</em>.</h2>
+  </header>
+  <div class="body">
+    <div class="legend" style="font-size:17px;gap:8px 18px" data-step="0">
+      <span style="color:var(--ink)">tool call: <b style="color:var(--out)">output 5&times;</b></span><span>&rarr;</span>
+      <span style="color:var(--ink)">tool result: <b style="color:var(--hot)">written once 2&times;</b></span><span>&rarr;</span>
+      <span style="color:var(--ink)">then <b style="color:var(--cold)">0.1&times; on every later request</b></span>
+      <span style="margin-left:auto;color:var(--ink)">cost per token \(= 2 + 0.1 \times\) requests still to come</span>
+    </div>
+    <svg id="rentfig" viewBox="0 0 1152 360" width="1152" height="360" role="img" aria-label="Cumulative cost of one 10k-token tool result: 20k to write, then 1k per later request, 120k after 100 requests; a taxi meter shows the running total."></svg>
+  </div>
+  <p class="home">A 10k file read early in a long session costs 120k. Read narrowly: early is expensive.</p>
+  <aside class="notes">
+    <p>Say: The tool call the model writes is output, 5&times;. The tool result, say a 10k file, is written into the cache once at 2&times;: 20k. From then on every request re-reads it at 0.1&times;: 1k each. After 20 requests the rent has cost as much as the write; after 100 it is 120k, six times the write.</p>
+    <p>Arithmetic from the price ladder (slide 3), main session (1-hour cache). The 10k / 100 requests example is illustrative; a median interactive session has 53 requests (decide API), long ones several hundred.</p>
+  </aside>
+</section>
+
+<!-- ================= 6 QUADRATIC ================= -->
+<section class="slide" id="s6">
+  <header>
+    <p class="eyebrow">06 &middot; <b>why long sessions explode</b> &middot; <span class="tag">model: re-reads and relay fees only</span></p>
+    <h2>Context grows in a line. <em>The bill grows in a parabola.</em></h2>
+  </header>
+  <div class="body" style="gap:6px">
+    <svg id="quadfig" viewBox="0 0 1152 408" width="1152" height="408" role="img" aria-label="Left: context per request grows linearly to 1M tokens, or saw-tooth with relays at 150k. Right: cumulative re-read cost, quadratic without relays, near-linear with relays."></svg>
+  </div>
+  <p class="home">Double the session, 4&times; the re-read bill. A relay turns the parabola back into a line.</p>
+  <aside class="notes">
+    <p>Say: Left, the context grows by about 1.8k per request; at 1M, today's context window, that is 522 requests. Right, the sum of all re-reads: every request re-reads a bit more than the last, so the sum is a parabola. With a relay at 150k we restart at 50k and pay a fee each time: almost a straight line. Factor 4.4 at the end.</p>
+    <p>Model: c_k = c_0 + g k, c_0 50k, g 1.82k (mean growth per request, 3,586 work requests in 9 chains: relay-research 2026-11-02-main-handover-cost.md B3). reads(k) &asymp; 0.1 c_0 k + 0.05 g k&sup2;: 27.4M ITE at k = 522. Relay at 150k back to c_0, fee r = 120k (fast-path relay, relay deck slide 8): 9 relays, 6.2M. Factor 4.4. Only re-reads and relay fees are counted; new tokens and output are the same either way. The studies distinguish s_0 (first request) and c_0 = s_0 + 9k.</p>
+  </aside>
+</section>
+
+<!-- ================= 7 OVERVIEW ================= -->
+<section class="slide" id="s7">
+  <header>
+    <p class="eyebrow">07 &middot; <b>the map</b> &middot; nine habits</p>
+    <h2>Nine habits. <em>Each one with its number.</em></h2>
+  </header>
+  <div class="body">
+    <div class="grid9">
+      <div class="tile rise" data-step="0"><span class="no">1</span><span class="t">Start lean</span><span class="v">10k at start = 72k</span><svg class="ic"><use href="#i1"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">2</span><span class="t">Stable first, variable last</span><span class="v">&minus;40% per session start</span><svg class="ic"><use href="#i2"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">3</span><span class="t">Stay warm, never resume cold</span><span class="v">20&times; for a cold reply</span><svg class="ic"><use href="#i3"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">4</span><span class="t">One task, one session</span><span class="v">4k vs 15k per request</span><svg class="ic"><use href="#i4"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">5</span><span class="t">Feed the context sparingly</span><span class="v">10k read = 120k</span><svg class="ic"><use href="#i5"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">6</span><span class="t">Delegate to subagents</span><span class="v">start at 9k, not 41k</span><svg class="ic"><use href="#i6"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">7</span><span class="t">Relay at ~150k</span><span class="v">fee 120k, back in 14</span><svg class="ic"><use href="#i7"/></svg></div>
+      <div class="tile rise" data-step="0"><span class="no">8</span><span class="t">Right model, right effort</span><span class="v">Haiku = 1/40 of Opus</span><svg class="ic"><use href="#i8"/></svg></div>
+      <div class="tile fin rise" data-step="0"><span class="no">9</span><span class="t">Attack the plan before you build</span><span class="v">the cheapest token: never spent</span><svg class="ic" style="color:#F3B48C"><use href="#i9"/></svg></div>
+    </div>
+  </div>
+  <p class="home">Two levers behind all nine: carry less context, and keep the cache warm.</p>
+  <aside class="notes">
+    <p>Say: Here is the map. 1-5 are about what goes into the context and when; 6-7 about splitting work across sessions; 8 about the price per token; 9, the finale, about not doing work at all. On the 10-minute path skip 2, 4 and 8.</p>
+    <p>Numbers are from the slides that follow (each tile number = the slide's badge): 72k model (slide 8), &minus;40% measured (9), 20&times; (10), 4k vs 15k (11), 120k (5/12), 9k vs 41k measured (13), fee 120k / 14 requests (14), Haiku $0.10 vs Opus $4 per M input (16).</p>
+  </aside>
+</section>
+
+<!-- ================= 8 START LEAN ================= -->
+<section class="slide" id="s8">
+  <header>
+    <p class="eyebrow"><span class="tno">1</span><svg class="ic"><use href="#i1"/></svg><b>start lean</b> &middot; what request 1 carries</p>
+    <h2>Every session starts with <em>~32k tokens</em> before you say a word.</h2>
+  </header>
+  <div class="body">
+    <div>
+      <div class="tbar" data-step="0">
+        <div class="warm" style="flex:12000"><b>Tools + system prompt</b><span>~12k &middot; MCP tools add here</span></div>
+        <div class="wr" style="flex:11700"><b>Instructions</b><span>~11.7k &middot; CLAUDE.md chain</span></div>
+        <div class="wr" style="flex:7900"><b>Listings</b><span>~7.9k &middot; skills, agents</span></div>
+        <div class="pr" style="flex:900" title="your prompt"></div>
+      </div>
+      <div class="scale"><span>0</span><span>each box as wide as its tokens</span><span>your prompt &#9650; ~32k</span></div>
+    </div>
+    <div class="duo">
+      <div class="stat rise" data-step="1"><b>72k ITE</b><span>per 10k of start-up context, over a median 53-request session <span class="tag">model</span></span></div>
+      <div class="stat cold rise" data-step="1"><b>50&ndash;95k vs 420</b><span><code>claude -p</code> started in a big folder vs a bare system prompt in an empty one</span></div>
+      <div class="card rise" data-step="2">
+        <h3>Do</h3>
+        <ul class="acts">
+          <li>Remove MCP servers and tools you do not use</li>
+          <li>Keep <code>CLAUDE.md</code> short; how-tos into skills (load on demand)</li>
+          <li>Check with <code>/context</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p class="home">What you load at start, every request pays for: load what you need, when you need it.</p>
+  <aside class="notes">
+    <p>Say: Before your first word, request 1 already carries tools, system prompt, your instruction files and listings of skills and agents: about 32k in my setup. Each 10k there costs 20k to write and then 1k on every request. Run /context to see yours.</p>
+    <p>Sources: bar = relay deck slide 1 (first request of 12 sessions in ~/, 2026-11-16; sizes approximate; prompt enlarged to be visible). Instruction chain 11,753 tokens / 29.4 KB: startup-context.py -C ~ (2026-11-19). 72k = 2 &times; 10k + 0.1 &times; 10k &times; 52 later requests, median interactive session 53 requests (decide API, 178 sessions), a model. Headless: no-tools claude -p in the vault 50-95k context; bare system prompt in a neutral folder ~420 tokens (measured, tp#362).</p>
+  </aside>
+</section>
+
+<!-- ================= 9 STABLE FIRST ================= -->
+<section class="slide" id="s9">
+  <header>
+    <p class="eyebrow"><span class="tno">2</span><svg class="ic"><use href="#i2"/></svg><b>stable first, variable last</b> &middot; measured</p>
+    <h2>The cache reuses only an <em>identical prefix</em>.</h2>
+  </header>
+  <div class="body" style="gap:30px">
+    <div class="ba" style="margin-top:22px"><span class="lab">before</span>
+      <div class="tbar">
+        <span class="cpin" style="left:37.3%">cache point &#9660;</span>
+        <div class="warm cp" style="flex:12000"><b>tools + system</b><span>read 0.1&times;</span></div>
+        <div class="wr" style="flex:11700"><b>global instructions</b><span>rewritten 2&times;</span></div>
+        <div class="wr" style="flex:8800"><b>prompt, listings</b><span>written 2&times;</span></div>
+      </div><span class="cost" style="color:var(--hot)">50.1k</span></div>
+    <div class="ba rise" data-step="1"><span class="lab">after</span>
+      <div class="tbar">
+        <span class="cpin" style="left:73.5%">cache point &#9660;</span>
+        <div class="warm" style="flex:12000"><b>tools + system</b><span>read 0.1&times;</span></div>
+        <div class="warm cp" style="flex:11700"><b>global instructions</b><span>moved: read 0.1&times;</span></div>
+        <div class="wr" style="flex:8800"><b>prompt, listings</b><span>written 2&times;</span></div>
+      </div><span class="cost" style="color:var(--green)">30.1k</span></div>
+    <div class="cols rise" data-step="2" style="grid-template-columns:1fr 1fr;align-items:center">
+      <table class="mini">
+        <tr><td>first request, before (53 sessions)</td><td class="n">50.1k ITE</td></tr>
+        <tr><td>first request, after (50 sessions)</td><td class="n"><b>30.1k ITE</b></td></tr>
+        <tr><td>cold start (cache expired)</td><td class="n">~68k ITE</td></tr>
+      </table>
+      <p class="big" style="font-size:96px;text-align:center">&minus;40%<span style="display:block;font-family:var(--sans);font-weight:400;font-size:19px;color:var(--ink2);margin-top:6px">per session start, same text, new place</span></p>
+    </div>
+  </div>
+  <p class="home">One changed character re-writes everything after it: put what never changes first.</p>
+  <aside class="notes">
+    <p>Say: The cache reuses a prefix only if it is byte-identical up to a cache point. My global instructions sat after that point, together with my prompt, so every new session wrote them again. Moving them into the system prompt, in front of the cache point, cut the session start by 40%. Skip if short on time.</p>
+    <p>Sources: relay deck slides 1-2; tp#2168 B7: median first request of 53 interactive sessions before (2026-11-13..16) and 50 after (2026-11-16..18), ITE with read 0.1&times;, write 2&times;; cold start ~68k (9 of 59 after). ~22 sessions a day &asymp; 0.45M ITE a day saved. Block = 11.7k tokens, ~30 KB.</p>
+  </aside>
+</section>
+
+<!-- ================= 10 STAY WARM ================= -->
+<section class="slide" id="s10">
+  <header>
+    <p class="eyebrow"><span class="tno">3</span><svg class="ic"><use href="#i3"/></svg><b>stay warm, never resume cold</b></p>
+    <h2>Answer ten minutes later, <em>pay 20&times;</em>.</h2>
+  </header>
+  <div class="body" style="gap:24px">
+    <svg viewBox="0 0 1152 300" width="1152" height="300" role="img" aria-label="Timeline: the cache stays warm for one hour after the last request. A reply at 55 minutes reads 150k at 0.1x, 15k ITE; at 65 minutes it writes 150k at 2x, 300k ITE; a fresh session costs about 30k.">
+      <g data-step="0">
+        <rect x="150" y="20" width="768" height="46" fill="#F0DDCE"/>
+        <rect x="918" y="20" width="140" height="46" fill="#D4E3EC"/>
+        <svg x="160" y="27" width="32" height="32" style="color:#B8511A"><use href="#flame"/></svg>
+        <text x="200" y="51" font-size="18" font-weight="600" fill="#B8511A" class="mono" letter-spacing="1">WARM: THE PREFIX IS STILL CACHED</text>
+        <svg x="1018" y="27" width="32" height="32" style="color:#28688E"><use href="#snow"/></svg>
+        <text x="1010" y="51" font-size="18" font-weight="600" fill="#28688E" class="mono" text-anchor="end">COLD</text>
+        <line x1="918" y1="2" x2="918" y2="78" stroke="#28688E" stroke-width="3" stroke-dasharray="6 5"/>
+        <text x="910" y="13" font-size="16" fill="#28688E" text-anchor="end" class="mono">1 h: cache expires</text>
+        <line x1="150" y1="72" x2="1080" y2="72" stroke="#7E8A96"/>
+        <g font-size="15" fill="#7E8A96" class="mono" text-anchor="middle">
+          <text x="150" y="96">0</text><text x="278" y="96">10</text><text x="406" y="96">20</text><text x="534" y="96">30</text><text x="662" y="96">40</text><text x="790" y="96">50 min</text>
+        </g>
+        <circle cx="854" cy="72" r="10" fill="#B8511A" stroke="#fff" stroke-width="3"/>
+        <text x="0" y="148" font-size="21" font-weight="600" fill="#131A20">reply at 55 min</text>
+        <text x="0" y="172" font-size="17" fill="#4E5A66">150k read at 0.1&times;</text>
+        <rect class="growx" x="220" y="130" width="40" height="40" fill="#28688E"/>
+        <text x="272" y="159" font-size="24" font-weight="700" fill="#131A20" class="cond">15k ITE</text>
+      </g>
+      <g data-step="1">
+        <circle cx="982" cy="72" r="10" fill="#28688E" stroke="#fff" stroke-width="3"/>
+        <text x="0" y="218" font-size="21" font-weight="600" fill="#131A20">reply at 65 min</text>
+        <text x="0" y="242" font-size="17" fill="#4E5A66">150k rewritten at 2&times;</text>
+        <rect class="growx" x="220" y="200" width="800" height="40" fill="#B8511A"/>
+        <text x="236" y="229" font-size="24" font-weight="700" fill="#fff" class="cond">300k ITE before the first new word</text>
+        <text x="1150" y="242" font-size="64" font-weight="700" fill="#B8511A" class="cond" text-anchor="end">20&times;</text>
+      </g>
+      <g data-step="2">
+        <text x="0" y="284" font-size="21" font-weight="600" fill="#0A8A72">fresh session</text>
+        <rect class="growx" x="220" y="262" width="80" height="34" fill="#0A8A72"/>
+        <text x="312" y="287" font-size="22" font-weight="700" fill="#0A8A72" class="cond">~30k ITE: start fresh from a short note</text>
+      </g>
+    </svg>
+    <ul class="acts rise" data-step="2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <li>Batch follow-ups inside the hour</li>
+      <li>After a long break: a fresh session from a note, not <code>--resume</code></li>
+      <li>Mid-session, do not change MCP tools, effort or thinking</li>
+    </ul>
+  </div>
+  <p class="home"><span>After an hour away, a fresh session from a short note beats <code>--resume</code> by 10&times;.</span></p>
+  <aside class="notes">
+    <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k.</p>
+    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 9). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
+  </aside>
+</section>
+
+<!-- ================= 11 ONE TASK ONE SESSION ================= -->
+<section class="slide" id="s11">
+  <header>
+    <p class="eyebrow"><span class="tno">4</span><svg class="ic"><use href="#i4"/></svg><b>one task, one session</b></p>
+    <h2>A new topic in an old session <em>pays rent on the old one</em>.</h2>
+  </header>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1.25fr 1fr;gap:40px">
+      <svg viewBox="0 0 640 330" width="640" height="330" role="img" aria-label="Re-read cost per request: 4k at 40k context, 15k at 150k context.">
+        <text x="0" y="22" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">RE-READ COST OF EVERY REQUEST</text>
+        <line x1="40" y1="300" x2="620" y2="300" stroke="#131A20" stroke-width="2"/>
+        <g data-step="0">
+          <rect class="grow" x="90" y="230" width="170" height="70" fill="#0A8A72"/>
+          <text x="175" y="216" text-anchor="middle" font-size="40" class="cond" fill="#0A8A72">4k</text>
+          <text x="175" y="326" text-anchor="middle" font-size="18" fill="#4E5A66">new session, 40k context</text>
+        </g>
+        <g data-step="1">
+          <rect class="grow" x="380" y="40" width="170" height="260" fill="#B8511A"/>
+          <text x="465" y="88" text-anchor="middle" font-size="40" class="cond" fill="#fff">15k</text>
+          <text x="465" y="326" text-anchor="middle" font-size="18" fill="#4E5A66">same task at 150k context</text>
+          <text x="465" y="200" text-anchor="middle" font-size="18" fill="#fff">110k of an</text>
+          <text x="465" y="222" text-anchor="middle" font-size="18" fill="#fff">old topic,</text>
+          <text x="465" y="244" text-anchor="middle" font-size="18" fill="#fff">re-read each time</text>
+        </g>
+      </svg>
+      <div class="card rise" data-step="2">
+        <h3>When the topic changes</h3>
+        <ul class="acts">
+          <li><code>/clear</code> or a new session</li>
+          <li>Carry over only a short note</li>
+          <li><code>/compact</code> = a built-in relay: automatic, but lossy</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p class="home"><span>One task per session: <code>/clear</code> when the topic changes.</span></p>
+  <aside class="notes">
+    <p>Say: Every request pays 0.1&times; its whole context. At 40k that is 4k per request; if the same small task runs at the end of a 150k session, every request pays 15k, mostly for a topic you finished an hour ago. /compact summarises in place: it is a relay done by Claude Code, cheaper than nothing but you do not control what survives. Skip if short on time.</p>
+    <p>Arithmetic: 0.1 &times; context (relay deck slide 5; agent-band.md Q1: 20-40k pays 2-4k, 110k 11k, 180k 18k per request).</p>
+  </aside>
+</section>
+
+<!-- ================= 12 FEED SPARINGLY ================= -->
+<section class="slide" id="s12">
+  <header>
+    <p class="eyebrow"><span class="tno">5</span><svg class="ic"><use href="#i5"/></svg><b>feed the context sparingly</b></p>
+    <h2>What enters the context <em>stays and pays rent</em>.</h2>
+  </header>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:1fr 1fr;gap:40px;align-items:stretch">
+      <div class="card" data-step="0" style="border-top:4px solid var(--hot)">
+        <h3>What bloats a researcher's context</h3>
+        <ul style="padding-left:24px">
+          <li><b>Notebooks</b> with outputs and images</li>
+          <li><b>Printed dataframes</b> and arrays</li>
+          <li><b>Full logs</b> and training output</li>
+          <li><b>Whole-file reads</b> for one function</li>
+          <li><b>Long answers</b> and full rewrites (output 5&times;)</li>
+        </ul>
+      </div>
+      <div class="card ok rise" data-step="1" style="border-top:4px solid var(--green)">
+        <h3 style="color:var(--green)">Ask for this instead</h3>
+        <ul class="acts">
+          <li>Read line ranges; <code>grep</code> with a cap</li>
+          <li><code>df.head()</code>, shapes, summaries</li>
+          <li>Pipe noisy commands through <code>tail -n 40</code></li>
+          <li>Strip notebook outputs before reading</li>
+          <li>Ask for a diff, not a rewrite</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p class="home">Every 10k you let in early costs ~120k by the end: print little, read narrowly.</p>
+  <aside class="notes">
+    <p>Say: Slide 5 in practice. Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. Ask the agent to look at line ranges, heads, tails, and to answer with diffs.</p>
+    <p>120k = 10k &times; (2 + 0.1 &times; 100 later requests), slide 5, illustrative. For notebooks: nbstripout or <code>jupyter nbconvert --clear-output</code> before the agent reads them.</p>
+  </aside>
+</section>
+
+<!-- ================= 13 SUBAGENTS ================= -->
+<section class="slide" id="s13">
+  <header>
+    <p class="eyebrow"><span class="tno">6</span><svg class="ic"><use href="#i6"/></svg><b>delegate to subagents</b> &middot; lean and BIG</p>
+    <h2>Let a helper do the reading. <em>Keep only its report.</em></h2>
+  </header>
+  <div class="body">
+    <svg viewBox="0 0 1152 330" width="1152" height="330" role="img" aria-label="Start contexts and re-read per request: lean subagent 9k, 0.9k per request; BIG subagent 32-35k, 3.2-3.5k; main session 41k growing to 150k, 4-15k per request.">
+      <g class="mono" font-size="15" fill="#7E8A96"><text x="250" y="18">CONTEXT AT START (k tokens) &#8594;</text><text x="1152" y="18" text-anchor="end">RE-READ / REQUEST</text></g>
+      <g data-step="0">
+        <text x="0" y="68" font-size="22" font-weight="600" fill="#131A20">main session</text>
+        <text x="0" y="92" font-size="17" fill="#4E5A66">the one you talk to</text>
+        <rect class="growx" x="250" y="46" width="213" height="46" fill="#28688E"/>
+        <rect class="growx" x="463" y="46" width="567" height="46" fill="#D4E3EC" stroke="#28688E" stroke-dasharray="5 4"/>
+        <text x="262" y="76" font-size="19" fill="#fff" font-weight="600">41k</text>
+        <text x="746" y="76" font-size="19" fill="#28688E" text-anchor="middle">grows to ~150k</text>
+        <text x="1152" y="78" font-size="28" class="cond" fill="#B8511A" text-anchor="end">4&ndash;15k</text>
+      </g>
+      <g data-step="1">
+        <text x="0" y="168" font-size="22" font-weight="600" fill="#131A20">BIG subagent</text>
+        <text x="0" y="192" font-size="17" fill="#4E5A66">loads all instructions</text>
+        <rect class="growx" x="250" y="146" width="177" height="46" fill="#B8511A"/>
+        <text x="439" y="176" font-size="19" fill="#131A20" font-weight="600">32&ndash;35k</text>
+        <text x="1152" y="178" font-size="28" class="cond" fill="#B8511A" text-anchor="end">3.2&ndash;3.5k</text>
+        <text x="0" y="250" font-size="22" font-weight="600" fill="#131A20">lean subagent</text>
+        <text x="0" y="274" font-size="17" fill="#4E5A66">skips the CLAUDE.md files</text>
+        <rect class="growx" x="250" y="228" width="48" height="46" fill="#0A8A72"/>
+        <text x="310" y="258" font-size="19" fill="#131A20" font-weight="600">9.3k</text>
+        <text x="1152" y="260" font-size="28" class="cond" fill="#0A8A72" text-anchor="end">0.9k</text>
+      </g>
+      <g data-step="2">
+        <path class="draw" pathLength="1" d="M700 212 C 700 150, 640 110, 560 98" fill="none" stroke="#131A20" stroke-width="2.5" stroke-dasharray="1" marker-end="url(#arrowk)"/>
+        <rect x="575" y="214" width="380" height="64" fill="#fff" stroke="#131A20" stroke-width="1.5"/>
+        <text x="590" y="241" font-size="19" fill="#131A20" font-weight="600">only the short report goes back,</text>
+        <text x="590" y="265" font-size="19" fill="#131A20">not the files it read</text>
+      </g>
+      <defs><marker id="arrowk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#131A20"/></marker></defs>
+    </svg>
+    <p class="rise" data-step="2" style="font-size:19px"><b>Lean by default</b> (a custom agent in <code>.claude/agents/</code> that skips the instruction files). <b>BIG</b> only when the task needs your full rules, its tools or your judgment.</p>
+  </div>
+  <p class="home">Send the reading to a lean helper; only its report enters your context.</p>
+  <aside class="notes">
+    <p>Say: A subagent is a fresh session for one job. A lean one starts at 9k, so each of its requests re-reads under 1k, while the same work in my main session would re-read 4-15k per request. And my main session only receives the short report, not the twenty files the helper read.</p>
+    <p>Sources: lean 9.3k (median successor start, agent-band.md Q1), BIG ~32-35k (Q1 / cc_relay.py DEFAULT_AGENT_S0 35k), main ~41k start (decide API median of 178 interactive sessions, 41.05k) and ~133-176k at the relay. Re-read = 0.1 &times; context. Lean = agent definitions with <code>omitClaudeMd: true</code> (~/.claude/agents/opus-builder.md, sonnet-builder.md).</p>
+  </aside>
+</section>
+
+<!-- ================= 14 RELAY ================= -->
+<section class="slide" id="s14">
+  <header>
+    <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>relay</b> &middot; hand over the baton</p>
+    <h2>Write a note, <em>start fresh</em>, keep going.</h2>
+  </header>
+  <div class="body">
+    <svg viewBox="0 0 1152 300" width="1152" height="300" role="img" aria-label="Relay: old session at about 159k hands a note with goal, state, decisions and next steps to a new session that starts at about 41k.">
+      <defs>
+        <marker id="arr14" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#7E8A96"/></marker>
+        <linearGradient id="oldg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#28688E"/><stop offset="1" stop-color="#B8511A"/></linearGradient>
+      </defs>
+      <g data-step="0">
+        <rect class="grow" x="40" y="40" width="150" height="220" fill="url(#oldg)"/>
+        <text x="115" y="284" font-size="20" font-weight="600" text-anchor="middle" fill="#131A20">old session</text>
+        <text x="115" y="30" font-size="30" class="cond" text-anchor="middle" fill="#B8511A">~159k</text>
+        <!-- runner 1 -->
+        <g stroke="#131A20" stroke-width="5" stroke-linecap="round" fill="none">
+          <circle cx="300" cy="92" r="16" fill="#131A20"/>
+          <path d="M296 110 L282 175 M282 175 L250 230 M282 175 L318 220 L338 256 M292 130 L330 150 L362 140 M292 130 L262 160"/>
+        </g>
+      </g>
+      <g data-step="1">
+        <g class="baton"><rect x="356" y="128" width="64" height="12" rx="6" fill="#B8511A" transform="rotate(-12 388 134)"/></g>
+        <rect x="420" y="70" width="300" height="170" fill="#fff" stroke="#B8511A" stroke-width="3"/>
+        <text x="440" y="104" class="mono" font-size="16" fill="#B8511A" letter-spacing="2">HANDOFF NOTE</text>
+        <g font-size="20" fill="#131A20"><text x="440" y="138">goal</text><text x="440" y="164">state</text><text x="440" y="190">decisions</text><text x="440" y="216">next steps</text></g>
+        <g font-size="16" fill="#7E8A96"><text x="560" y="138">what for</text><text x="560" y="164">done, open</text><text x="560" y="190">and why</text><text x="560" y="216">first action</text></g>
+        <!-- runner 2 -->
+        <g stroke="#0A8A72" stroke-width="5" stroke-linecap="round" fill="none">
+          <circle cx="808" cy="92" r="16" fill="#0A8A72"/>
+          <path d="M804 110 L790 175 M790 175 L760 230 M790 175 L826 220 L846 256 M800 130 L770 150 L740 140 M800 130 L840 160"/>
+        </g>
+      </g>
+      <g data-step="2">
+        <rect class="grow" x="960" y="203" width="150" height="57" fill="#0A8A72"/>
+        <text x="1035" y="284" font-size="20" font-weight="600" text-anchor="middle" fill="#131A20">new session</text>
+        <text x="1035" y="190" font-size="30" class="cond" text-anchor="middle" fill="#0A8A72">~41k</text>
+        <text x="570" y="284" font-size="24" class="cond" text-anchor="middle" fill="#B8511A">relay fee ~120k ITE (~$0.40)</text>
+      </g>
+    </svg>
+    <div class="duo rise" data-step="3" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><b>~14 requests</b><span>until the fee is paid back</span></div>
+      <div class="stat cold"><b data-count="438" data-fmt="int">438</b><span>relays in our sessions in 30 days</span></div>
+      <div class="stat cold"><b>90%</b><span>of them judged a good handover</span></div>
+    </div>
+  </div>
+  <p class="home">A relay costs about one fresh start and pays back within ~14 requests.</p>
+  <aside class="notes">
+    <p>Say: Like a relay race: the runner does not stop the race, she hands the baton to fresh legs. The old session writes a short note; a new session starts from it at about 41k instead of carrying 159k. The fee is about 120k, mostly the new session writing its start context; it is paid back after about 14 requests.</p>
+    <p>Sources: decide relay-cost API via scripts/relay_cost_stats.py (run 2026-11-19 12:17): 438 relays since 2026-10-20, median context at relay 159k, 84% fast path, 90% verdict good; median handover + tail 66k ITE (the new session's first request, ~30-69k, comes on top). Fee ~120k ITE / ~$0.40 and break-even ~14 requests: fast-path relays of 2026-11-03 (relay deck slide 8, n = 4; 104-132k, $0.37-0.45). Start 41k: median of 178 interactive sessions.</p>
+  </aside>
+</section>
+
+<!-- ================= 15 WHEN TO RELAY ================= -->
+<section class="slide" id="s15">
+  <header>
+    <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>when to relay</b> &middot; <span class="tag">model, fast-path fee r = 120k</span></p>
+    <h2>Too early is worst. <em>A bit late is cheap.</em></h2>
+  </header>
+  <div class="body" style="gap:4px">
+    <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 350k, cap 400k; subagents warn 110k, due 150k, force 165k."></svg>
+  </div>
+  <p class="home">Too early is worst, a bit late is cheap, never is +40%.</p>
+  <aside class="notes">
+    <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 350k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k.</p>
+    <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. Measured replay of 9 real chains (whole bill, main-handover-cost.md B3): relay at 80k +14 to +42%, at 250k +7 to +9%, never (force at 450k only) +37 to +42%. Rules: cc_relay.py docstring (floor 150k, force 350k = min(350k, cap 400k &minus; 50k)), subagent band 110 / 150 / 165k.</p>
+  </aside>
+</section>
+
+<!-- ================= 16 RIGHT MODEL ================= -->
+<section class="slide" id="s16">
+  <header>
+    <p class="eyebrow"><span class="tno">8</span><svg class="ic"><use href="#i8"/></svg><b>right model, right effort</b> &middot; list price per million tokens</p>
+    <h2>The same token costs <em>40&times; less</em> on a small model.</h2>
+  </header>
+  <div class="body">
+    <svg viewBox="0 0 1152 250" width="1152" height="250" role="img" aria-label="Input price per million tokens: Opus 5.5 4 dollars, Sonnet 5.5 2 dollars, Haiku 5.5 10 cents; output 20, 10 and 0.50 dollars.">
+      <g class="mono" font-size="15" fill="#7E8A96"><text x="250" y="16">INPUT $ / M TOKENS (output is 5&times;)</text></g>
+      <g data-step="0">
+        <text x="0" y="66" font-size="26" font-weight="600" fill="#131A20">Opus 5.5</text>
+        <rect class="growx" x="250" y="38" width="720" height="44" fill="#B8511A"/>
+        <text x="984" y="70" font-size="30" class="cond" fill="#131A20">$4 &middot; out $20</text>
+        <text x="0" y="136" font-size="26" font-weight="600" fill="#131A20">Sonnet 5.5</text>
+        <rect class="growx" x="250" y="108" width="360" height="44" fill="#9A7B10"/>
+        <text x="624" y="140" font-size="30" class="cond" fill="#131A20">$2 &middot; out $10</text>
+        <text x="0" y="206" font-size="26" font-weight="600" fill="#131A20">Haiku 5.5</text>
+        <rect class="growx" x="250" y="178" width="18" height="44" fill="#0A8A72"/>
+        <text x="282" y="210" font-size="30" class="cond" fill="#131A20">$0.10 &middot; out $0.50</text>
+      </g>
+    </svg>
+    <div class="cols rise" data-step="1" style="grid-template-columns:1fr 1fr;gap:28px;align-items:start">
+      <div class="card"><h3 style="color:var(--green)">Small model</h3><p>Renaming, formatting, boilerplate, summarising a log, simple scripts</p></div>
+      <div class="card"><h3>Big model, high effort</h3><p>Design, debugging, analysis plans. Thinking is output: 5&times;. Turn it up only where it pays</p></div>
+    </div>
+  </div>
+  <p class="home">Pay big-model prices for thinking, not for typing.</p>
+  <aside class="notes">
+    <p>Say: Prices per token differ by a factor 40 between the big and the small model. Mechanical work does not need the big model, and thinking tokens are billed as output, five times input. Use <code>/model</code> and the effort setting deliberately. Skip if short on time.</p>
+    <p>Source: bin/ai_lib/llm_prices.py (mydotfiles), checked 2026-11-19: claude-opus-5-5 $4 in / $20 out / $0.20 cache read; claude-sonnet-5-5 $2 / $10 / $0.20; claude-haiku-5-5 $0.10 / $0.50 (higher tier above 100k prompt tokens: $0.50 / $2.50). Seat limits per model are not covered here.</p>
+  </aside>
+</section>
+
+<!-- ================= 17 REMEMBER ================= -->
+<section class="slide" id="s17">
+  <header>
+    <p class="eyebrow">17 &middot; <b>one slide to remember</b></p>
+  </header>
+  <div class="body">
+    <div class="three">
+      <div class="rise" data-step="0"><i>01</i>Keep it <em>small</em>.</div>
+      <div class="rise" data-step="1"><i>02</i>Keep it <em>warm</em>.</div>
+      <div class="rise" data-step="2"><i>03</i>Hand over at <em>~150k</em>.</div>
+    </div>
+    <p class="check rise" data-step="3">Today: type <code>/context</code> in your next session and look.</p>
+  </div>
+  <p class="home">Small context, warm cache, timely relay: same work, a fraction of the limit.</p>
+  <aside class="notes">
+    <p>Say: If you remember three things: keep the context small (start lean, read narrowly, delegate), keep the cache warm (reply within the hour, start fresh after a break), and hand over at about 150k. And today: run /context once.</p>
+    <p>No new numbers; 150k = our relay floor (cc_relay.py) and the upper edge of the model's flat band (slide 15).</p>
+  </aside>
+</section>
+
+<!-- ================= 18 CODEX DEBATE ================= -->
+<section class="slide dark" id="s18">
+  <header>
+    <p class="eyebrow"><span class="tno">9</span><svg class="ic" style="color:#F3B48C"><use href="#i9"/></svg><b style="color:#F3B48C">attack the plan before you build</b> &middot; the Codex debate</p>
+    <h2>The cheapest token is the one <em>for work you never do</em>.</h2>
+  </header>
+  <div class="body" style="gap:8px">
+    <svg id="duelfig" viewBox="0 0 1152 360" width="1152" height="360" role="img" aria-label="Two fencers: Claude proposes a plan, Codex, a model from another vendor, attacks it read-only; rounds go back and forth until a judge gives a verdict; the plan is revised before any code is written."></svg>
+    <div class="cols rise" data-step="4" style="grid-template-columns:1fr 1fr;gap:24px">
+      <p style="font-size:21px;border-left:5px solid #0A8A72;padding-left:14px"><b>Flaw found in the plan:</b> a few thousand tokens of debate.</p>
+      <p style="font-size:21px;border-left:5px solid #B8511A;padding-left:14px"><b>Flaw found after the build:</b> you pay for the build twice.</p>
+    </div>
+  </div>
+  <p class="home">Let a second model attack your plan before a single line is built.</p>
+  <aside class="notes">
+    <p>Say: Before a big build, Claude writes the plan and a different model, Codex from another vendor, attacks it: read-only, it questions the requirements themselves and hunts flaws. They go back and forth in rounds; an independent judge decides when they converge. The plan is revised before any code exists. A wrong requirement found here costs a few rounds of text; found after the build it costs the build, twice.</p>
+    <p>How it works: ~/.claude/skills/codex-debate/SKILL.md (judged Claude &harr; Codex debate, Codex read-only, rounds until the judge's verdict; mode plan for PLAN files). No counts shown: no cheap source of debate statistics. You can do the same by hand: paste your plan into a second model and ask it to attack, not to agree.</p>
+  </aside>
+</section>
+
+</div>
+<div class="ruler">
+  <span>COST-EFFICIENT LLM USE</span>
+  <div class="track"><div class="span" id="span"></div></div>
+  <span class="dots" id="dots"></span>
+  <span class="count" id="count">1 / 18</span>
+  <span class="hint">&larr; &rarr; &middot; A all &middot; N notes</span>
+</div>
+</div>
+
+<script>
+'use strict';
+const NS = 'http://www.w3.org/2000/svg';
+const RM = matchMedia('(prefers-reduced-motion: reduce)');
+const C = {ink:'#131A20', ink2:'#4E5A66', ink3:'#7E8A96', rule:'#C1CBD3', hot:'#B8511A', hotT:'#F0DDCE',
+  cold:'#28688E', coldT:'#D4E3EC', out:'#A02C7C', green:'#0A8A72', gold:'#9A7B10'};
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const fmtK = v => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v / 1e3) + 'k';
+
+/* ---------- slide 4: request stack ---------- */
+function buildStack() {
+  const svg = document.getElementById('stackfig');
+  // per request: parts sent (k tokens), new = written this request, out = output of the request
+  const reqs = [
+    {ask: 1, parts: [['tools + system', 12, 'read'], ['instructions', 8, 'new'], ['your prompt', 2, 'new']], out: ['tool call', 0.5]},
+    {ask: 1, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
+    {ask: 1, add: [['tool call + result', 6.5]], out: ['answer', 1]},
+    {ask: 2, add: [['answer + prompt 2', 3]], out: ['tool call', 0.5]},
+    {ask: 2, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
+    {ask: 2, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
+    {ask: 2, add: [['tool call + result', 6.5]], out: ['answer', 1]},
+  ];
+  const X0 = 196, DX = 136, W = 78, BASE = 222, PX = 3.2, IBASE = 408, IPX = 3.2;
+  const steps = [0, 1, 1, 2, 2, 2, 2];
+  let prev = 0;
+  el('text', {x: 0, y: 60, 'font-size': 19, 'font-weight': 600, fill: C.ink}, svg, 'context sent');
+  el('text', {x: 0, y: 82, 'font-size': 16, fill: C.ink2}, svg, 'tokens, per request');
+  el('line', {x1: 180, y1: BASE, x2: 1152, y2: BASE, stroke: C.ink, 'stroke-width': 2}, svg);
+  reqs.forEach((q, i) => {
+    const g = el('g', {'data-step': steps[i]}, svg);
+    const x = X0 + i * DX;
+    let segs;
+    if (i === 0) segs = q.parts.map(p => [p[1], p[2], p[0]]);
+    else segs = [[prev, 'read', 'all of the above']].concat(q.add.map(a => [a[1], 'new', a[0]]));
+    let y = BASE, read = 0, wrote = 0;
+    const bar = el('g', {class: 'grow'}, g);
+    segs.forEach(s => {
+      const h = s[0] * PX;
+      y -= h;
+      if (s[1] === 'read') {
+        el('rect', {x, y, width: W, height: h, fill: C.coldT, stroke: C.cold, 'stroke-width': 1.5}, bar);
+        read += s[0];
+      } else {
+        el('rect', {x, y, width: W, height: h, fill: C.hot, stroke: '#E9EDF0', 'stroke-width': 1.5}, bar);
+        wrote += s[0];
+      }
+    });
+    prev = read + wrote;
+    // output marker
+    const oy = y - 8 - 12;
+    el('rect', {x: x + 8, y: oy, width: W - 16, height: 12, fill: C.out, rx: 2}, g);
+    el('text', {x: x + W / 2, y: oy - 7, 'text-anchor': 'middle', 'font-size': 15, fill: C.out}, g, q.out[0]);
+    el('text', {x: x + W / 2, y: BASE + 24, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 600, fill: C.ink}, g, 'k = ' + (i + 1));
+    // ITE row
+    const ite = [[read * 0.1, C.cold], [wrote * 2, C.hot], [q.out[1] * 5, C.out]];
+    const gi = el('g', {'data-step': 3}, svg);
+    let yi = IBASE;
+    const ib = el('g', {class: 'grow'}, gi);
+    ite.forEach(p => { const h = p[0] * IPX; yi -= h; el('rect', {x: x + 12, y: yi, width: W - 24, height: h, fill: p[1]}, ib); });
+    el('text', {x: x + W / 2, y: yi - 6, 'text-anchor': 'middle', 'font-size': 16, fill: C.ink, class: 'mono'}, gi, (ite[0][0] + ite[1][0] + ite[2][0]).toFixed(1) + 'k');
+    // read part label
+    el('text', {x: x + W / 2, y: IBASE + 20, 'text-anchor': 'middle', 'font-size': 15, fill: C.cold, class: 'mono'}, gi, 'read ' + ite[0][0].toFixed(1));
+  });
+  // annotations for request 1
+  const a = el('g', {'data-step': 0}, svg);
+  el('text', {x: 176, y: BASE - 14, 'text-anchor': 'end', 'font-size': 16, fill: C.cold}, a, 'tools + system');
+  el('text', {x: 176, y: BASE - 50, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, a, 'instructions');
+  el('text', {x: 176, y: BASE - 69, 'text-anchor': 'end', 'font-size': 16, fill: C.hot, 'font-weight': 600}, a, 'your prompt →');
+  const dl = el('g', {'data-step': 0}, svg);
+  el('text', {x: 0, y: BASE + 24, 'font-size': 16, fill: C.ink2}, dl, 'request = model call');
+  const da = el('g', {'data-step': 1}, svg);
+  const tA = el('text', {x: 0, y: BASE + 68, 'font-size': 16, fill: C.ink2}, da, 'k');
+  el('tspan', {'baseline-shift': 'sub', 'font-size': 12}, tA, 'A');
+  el('tspan', {}, tA, ' = prompts typed');
+  // asks axis
+  const ax = el('g', {}, svg);
+  [[0, 2, 1, 1], [3, 6, 2, 2]].forEach(([a0, a1, n, st]) => {
+    const g = el('g', {'data-step': st}, ax);
+    const xa = X0 + a0 * DX, xb = X0 + a1 * DX + W;
+    el('path', {d: `M${xa} ${BASE + 36} v8 H${xb} v-8`, fill: 'none', stroke: C.hot, 'stroke-width': 2.5}, g);
+    const t = el('text', {x: (xa + xb) / 2, y: BASE + 68, 'text-anchor': 'middle', 'font-size': 19, 'font-weight': 700, fill: C.hot}, g, 'ask k');
+    el('tspan', {'baseline-shift': 'sub', 'font-size': 14}, t, 'A');
+    el('tspan', {}, t, ' = ' + n + (n === 1 ? ': you typed once' : ''));
+  });
+  const lab = el('g', {'data-step': 3}, svg);
+  el('line', {x1: 180, y1: IBASE, x2: 1152, y2: IBASE, stroke: C.ink, 'stroke-width': 1.5}, lab);
+  el('text', {x: 0, y: IBASE - 34, 'font-size': 19, 'font-weight': 600, fill: C.ink}, lab, 'ITE of the request');
+  el('text', {x: 0, y: IBASE - 12, 'font-size': 16, fill: C.ink2}, lab, 'read part grows →');
+}
+
+/* ---------- slide 5: rent ---------- */
+function buildRent() {
+  const svg = document.getElementById('rentfig');
+  const x0 = 90, x1 = 760, y0 = 316, y1 = 20, N = 100, YM = 130;
+  const X = k => x0 + (x1 - x0) * k / N, Y = v => y0 - (y0 - y1) * v / YM;
+  const ax = el('g', {'data-step': 0}, svg);
+  el('line', {x1: x0, y1: y0, x2: x1 + 10, y2: y0, stroke: C.ink, 'stroke-width': 2}, ax);
+  el('line', {x1: x0, y1: y0, x2: x0, y2: y1 - 6, stroke: C.ink, 'stroke-width': 2}, ax);
+  [0, 20, 40, 60, 80, 100].forEach(k => el('text', {x: X(k), y: y0 + 22, 'text-anchor': 'middle', 'font-size': 16, fill: C.ink3, class: 'mono'}, ax, k));
+  [0, 40, 80, 120].forEach(v => el('text', {x: x0 - 10, y: Y(v) + 5, 'text-anchor': 'end', 'font-size': 16, fill: C.ink3, class: 'mono'}, ax, v + 'k'));
+  el('text', {x: x1, y: y0 + 42, 'text-anchor': 'end', 'font-size': 17, fill: C.ink2}, ax, 'requests after the file was read →');
+  el('text', {x: x0 + 8, y: y1 + 4, 'font-size': 17, fill: C.ink2}, ax, 'cost of one 10k tool result, ITE');
+  const g = el('g', {'data-step': 1}, svg);
+  el('rect', {class: 'grow', x: X(0) + 2, y: Y(20), width: 18, height: y0 - Y(20), fill: C.hot}, g);
+  const area = [`M${X(0)} ${Y(20)}`, `L${X(N)} ${Y(120)}`, `L${X(N)} ${Y(20)}`, 'Z'].join(' ');
+  el('path', {d: area, fill: C.coldT, opacity: 0.8}, g);
+  el('path', {class: 'draw slow', pathLength: 1, d: `M${X(0)} ${Y(20)} L${X(N)} ${Y(120)}`, fill: 'none', stroke: C.cold, 'stroke-width': 4}, g);
+  el('line', {x1: X(0), y1: Y(20), x2: X(N), y2: Y(20), stroke: C.hot, 'stroke-width': 2, 'stroke-dasharray': '6 5'}, g);
+  el('text', {x: X(0) + 28, y: Y(20) + 24, 'font-size': 18, fill: C.hot, 'font-weight': 600}, g, 'written once: 10k × 2 = 20k');
+  const ang = Math.atan2(Y(20) - Y(120), X(N) - X(0)) * 180 / Math.PI;
+  el('text', {x: X(38), y: Y(58) - 12, 'font-size': 18, fill: C.cold, 'font-weight': 600, transform: `rotate(${-ang} ${X(38)} ${Y(58) - 12})`}, g, 'rent: 10k × 0.1 = 1k every request');
+  el('line', {x1: X(20), y1: Y(40), x2: X(20), y2: y0, stroke: C.ink3, 'stroke-dasharray': '3 4'}, g);
+  el('text', {x: X(20) + 8, y: Y(20) - 12, 'font-size': 16, fill: C.ink2}, g, 'after 20: rent = write');
+  el('circle', {cx: X(N), cy: Y(120), r: 7, fill: C.cold}, g);
+  // taxi meter
+  const m = el('g', {'data-step': 1, transform: 'translate(820 40)'}, svg);
+  el('rect', {x: 0, y: 0, width: 320, height: 250, rx: 22, fill: C.ink}, m);
+  el('rect', {x: 110, y: -22, width: 100, height: 30, rx: 6, fill: '#F2C230'}, m);
+  el('text', {x: 160, y: -1, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: C.ink, class: 'mono'}, m, 'RENT');
+  el('rect', {x: 22, y: 28, width: 276, height: 104, rx: 8, fill: '#0B2A1F'}, m);
+  el('text', {x: 278, y: 104, 'text-anchor': 'end', 'font-size': 62, fill: '#7CF2B4', class: 'mono', 'data-count': 120, 'data-fmt': 'k', 'data-from': 20}, m, '120k');
+  el('text', {x: 36, y: 54, 'font-size': 15, fill: '#7CF2B4', class: 'mono', opacity: .7}, m, 'ITE so far');
+  el('text', {x: 160, y: 172, 'text-anchor': 'middle', 'font-size': 20, fill: '#fff'}, m, '20k write + 100 × 1k');
+  el('text', {x: 160, y: 202, 'text-anchor': 'middle', 'font-size': 17, fill: '#C7D0D8'}, m, '= 6× what it cost to load it');
+  el('circle', {cx: 160, cy: 230, r: 6, fill: '#F2C230', class: 'spark'}, m);
+}
+
+/* ---------- slide 6: quadratic ---------- */
+function buildQuad() {
+  const svg = document.getElementById('quadfig');
+  const c0 = 50e3, g = 1820, r = 120e3, F = 150e3, K = 522;
+  const L = {x0: 74, x1: 516, y0: 330, y1: 30}, R = {x0: 682, x1: 1124, y0: 330, y1: 30};
+  const LX = k => L.x0 + (L.x1 - L.x0) * k / K, LY = c => L.y0 - (L.y0 - L.y1) * c / 1e6;
+  const YM = 28e6, RX = k => R.x0 + (R.x1 - R.x0) * k / K, RY = v => R.y0 - (R.y0 - R.y1) * v / YM;
+  const axes = el('g', {'data-step': 0}, svg);
+  [[L, 'context sent with request k', [0, 250e3, 500e3, 750e3, 1e6], LY, v => v === 1e6 ? '1M' : v / 1e3 + 'k'],
+   [R, 'cumulative re-read cost, ITE', [0, 5e6, 10e6, 15e6, 20e6, 25e6], RY, v => v / 1e6 + 'M']].forEach(([P, title, ticks, Yf, f]) => {
+    el('line', {x1: P.x0, y1: P.y0, x2: P.x1 + 6, y2: P.y0, stroke: C.ink, 'stroke-width': 2}, axes);
+    el('line', {x1: P.x0, y1: P.y0, x2: P.x0, y2: P.y1 - 10, stroke: C.ink, 'stroke-width': 2}, axes);
+    ticks.forEach(t => {
+      el('line', {x1: P.x0, y1: Yf(t), x2: P.x1, y2: Yf(t), stroke: C.rule, 'stroke-width': t ? 1 : 0}, axes);
+      el('text', {x: P.x0 - 8, y: Yf(t) + 5, 'text-anchor': 'end', 'font-size': 15, fill: C.ink3, class: 'mono'}, axes, f(t));
+    });
+    [0, 100, 200, 300, 400, 500].forEach(k => el('text', {x: P.x0 + (P.x1 - P.x0) * k / K, y: P.y0 + 22, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, axes, k));
+    el('text', {x: P.x1, y: P.y0 + 46, 'text-anchor': 'end', 'font-size': 17, fill: C.ink2}, axes, 'request k →');
+    el('text', {x: P.x0 + 10, y: P.y1 - 12, 'font-size': 18, 'font-weight': 600, fill: C.ink}, axes, title);
+  });
+  // no relay
+  let dL = '', dR = '', cum = 0;
+  for (let k = 0; k <= K; k += 2) {
+    const c = c0 + g * k;
+    dL += (k ? 'L' : 'M') + LX(k).toFixed(1) + ' ' + LY(c).toFixed(1);
+  }
+  for (let k = 0; k <= K; k++) {
+    if (k) cum += 0.1 * (c0 + g * (k - 1));
+    if (k % 2 === 0 || k === K) dR += (k ? 'L' : 'M') + RX(k).toFixed(1) + ' ' + RY(cum).toFixed(1);
+  }
+  const noRel = cum;
+  const s1 = el('g', {'data-step': 1}, svg);
+  el('path', {class: 'draw slow', pathLength: 1, d: dL, fill: 'none', stroke: C.hot, 'stroke-width': 4}, s1);
+  el('text', {x: LX(K) - 4, y: LY(1e6) + 26, 'text-anchor': 'end', 'font-size': 18, fill: C.hot, 'font-weight': 600}, s1, '1M after 522 requests');
+  el('text', {x: LX(40), y: LY(140e3) - 8, 'font-size': 17, fill: C.hot, transform: `rotate(-31.5 ${LX(40)} ${LY(140e3) - 8})`}, s1, '+1.82k per request');
+  const s2 = el('g', {'data-step': 2}, svg);
+  el('path', {class: 'draw slow', pathLength: 1, d: dR, fill: 'none', stroke: C.hot, 'stroke-width': 4}, s2);
+  el('text', {x: RX(K) - 34, y: RY(noRel) + 6, 'text-anchor': 'end', 'font-size': 36, fill: C.hot, class: 'cond', 'data-count': noRel / 1e6, 'data-fmt': 'M1'}, s2, fmtK(noRel));
+  el('text', {x: RX(K) - 50, y: RY(noRel) + 28, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, s2, 'no relay');
+  const fo = el('foreignObject', {x: R.x0 + 12, y: R.y1 + 8, width: 330, height: 66}, s2);
+  const div = document.createElement('div');
+  div.className = 'qformula';
+  div.style.cssText = 'font-size:17.5px;background:#fff;border:2px solid #B8511A;padding:6px 10px;color:#131A20;display:inline-block';
+  div.textContent = '\\(\\text{reads}(k) \\approx 0.1\\,c_0 k + 0.05\\,g\\,k^2\\)';
+  fo.appendChild(div);
+  // relay
+  let c = c0; cum = 0; let dL2 = 'M' + LX(0) + ' ' + LY(c0), dR2 = 'M' + RX(0) + ' ' + RY(0), rel = 0;
+  for (let k = 1; k <= K; k++) {
+    let cPrev = c;
+    if (c >= F) {
+      dL2 += 'L' + LX(k - 1).toFixed(1) + ' ' + LY(c).toFixed(1) + 'L' + LX(k - 1).toFixed(1) + ' ' + LY(c0).toFixed(1);
+      c = c0; cum += r; rel++;
+      dR2 += 'L' + RX(k - 1).toFixed(1) + ' ' + RY(cum).toFixed(1);
+    }
+    cum += 0.1 * c; c += g;
+    dR2 += 'L' + RX(k).toFixed(1) + ' ' + RY(cum).toFixed(1);
+    void cPrev;
+  }
+  dL2 += 'L' + LX(K).toFixed(1) + ' ' + LY(c).toFixed(1);
+  const s3 = el('g', {'data-step': 3}, svg);
+  el('line', {x1: L.x0, y1: LY(F), x2: L.x1, y2: LY(F), stroke: C.green, 'stroke-width': 1.5, 'stroke-dasharray': '6 5'}, s3);
+  el('path', {class: 'draw slow', pathLength: 1, d: dL2, fill: 'none', stroke: C.green, 'stroke-width': 3}, s3);
+  el('text', {x: L.x1, y: LY(F) - 30, 'text-anchor': 'end', 'font-size': 18, fill: C.green, 'font-weight': 600}, s3, 'relay at 150k → back to c₀ = 50k');
+  el('path', {class: 'draw slow', pathLength: 1, d: dR2, fill: 'none', stroke: C.green, 'stroke-width': 4}, s3);
+  el('text', {x: RX(K) - 8, y: RY(cum) - 12, 'text-anchor': 'end', 'font-size': 36, fill: C.green, class: 'cond'}, s3, fmtK(cum));
+  el('text', {x: RX(K) - 8, y: RY(cum) + 42, 'text-anchor': 'end', 'font-size': 16, fill: C.green}, s3, rel + ' relays, fee r = 120k each');
+  el('text', {x: RX(190), y: RY(15e6), 'text-anchor': 'middle', 'font-size': 84, fill: C.ink, class: 'cond'}, s3, (noRel / cum).toFixed(1) + '×');
+  el('text', {x: RX(190), y: RY(15e6) + 28, 'text-anchor': 'middle', 'font-size': 18, fill: C.ink2}, s3, 'cheaper with relays');
+}
+
+/* ---------- slide 15: U-curve ---------- */
+function buildU() {
+  const svg = document.getElementById('ufig');
+  const c0 = 50e3, g = 1820, r = 120e3, YM = 50e3;
+  const x0 = 110, x1 = 1130, y0 = 250, y1 = 16, lo = 50e3, hi = 1e6;
+  const X = c => x0 + (x1 - x0) * Math.log(c / lo) / Math.log(hi / lo);
+  const Y = v => y0 - (y0 - y1) * Math.min(v, YM) / YM;
+  const f = c => { const k = (c - c0) / g; return r / k + 0.05 * g * k + 0.1 * c0; };
+  const kopt = Math.sqrt(20 * r / g), copt = c0 + g * kopt, fopt = f(copt);
+  const ax = el('g', {'data-step': 0}, svg);
+  el('line', {x1: x0, y1: y0, x2: x1, y2: y0, stroke: C.ink, 'stroke-width': 2}, ax);
+  el('line', {x1: x0, y1: y0, x2: x0, y2: y1, stroke: C.ink, 'stroke-width': 2}, ax);
+  [0, 10e3, 20e3, 30e3, 40e3, 50e3].forEach(v => {
+    el('line', {x1: x0, y1: Y(v), x2: x1, y2: Y(v), stroke: C.rule, 'stroke-width': v ? 1 : 0}, ax);
+    el('text', {x: x0 - 8, y: Y(v) + 5, 'text-anchor': 'end', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, v / 1e3 + 'k');
+  });
+  el('text', {x: x0 + 8, y: y1 + 6, 'font-size': 17, fill: C.ink2}, ax, '');
+  el('text', {x: 0, y: 120, 'font-size': 17, fill: C.ink2}, ax, 'ITE per');
+  el('text', {x: 0, y: 140, 'font-size': 17, fill: C.ink2}, ax, 'request');
+  [50e3, 100e3, 150e3, 200e3, 350e3, 400e3, 1e6].forEach(cc => {
+    el('line', {x1: X(cc), y1: y0, x2: X(cc), y2: y0 + 6, stroke: C.ink}, ax);
+    if (cc !== 350e3 && cc !== 400e3) el('text', {x: X(cc), y: y0 + 24, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, cc === 1e6 ? '1M' : cc / 1e3 + 'k');
+  });
+  el('text', {x: x1, y: y0 + 46, 'text-anchor': 'end', 'font-size': 16, fill: C.ink2}, ax, 'relay point: context at hand-over (log scale) →');
+  // band
+  const band = el('g', {'data-step': 2}, svg);
+  const disc = Math.sqrt((1.05 * fopt - 0.1 * c0) ** 2 - 4 * 0.05 * g * r);
+  const ka = ((1.05 * fopt - 0.1 * c0) - disc) / (2 * 0.05 * g), kb = ((1.05 * fopt - 0.1 * c0) + disc) / (2 * 0.05 * g);
+  const ca = c0 + g * ka, cb = c0 + g * kb;
+  el('rect', {x: X(ca), y: y1, width: X(cb) - X(ca), height: y0 - y1, fill: C.green, opacity: .14}, band);
+  el('text', {x: (X(ca) + X(cb)) / 2, y: y0 - 10, 'text-anchor': 'middle', 'font-size': 16, fill: C.green, 'font-weight': 600}, band, '≤ +5%: ' + Math.round(ca / 1e3) + '–' + Math.round(cb / 1e3) + 'k');
+  // curve
+  let d = '';
+  for (let i = 0; i <= 300; i++) {
+    const cc = lo * Math.pow(hi / lo, i / 300);
+    if (cc < c0 + 3 * g) continue;
+    if (f(cc) > YM && cc > copt) break;
+    d += (d ? 'L' : 'M') + X(cc).toFixed(1) + ' ' + Y(f(cc)).toFixed(1);
+  }
+  const cv = el('g', {'data-step': 1}, svg);
+  el('path', {class: 'draw slow', pathLength: 1, d, fill: 'none', stroke: C.hot, 'stroke-width': 4.5}, cv);
+  el('circle', {cx: X(copt), cy: Y(fopt), r: 7, fill: C.ink}, cv);
+  el('text', {x: X(copt) + 4, y: Y(fopt) - 16, 'font-size': 17, fill: C.ink, 'text-anchor': 'middle', 'font-weight': 600}, cv, 'cheapest c* ≈ ' + Math.round(copt / 1e3) + 'k');
+  el('text', {x: X(c0 + 4 * g) + 26, y: y0 - 34, 'font-size': 18, fill: C.hot, 'font-weight': 600}, cv, '← too early: fee r/k');
+  el('text', {x: X(400e3) + 14, y: Y(13e3), 'font-size': 18, fill: C.hot, 'font-weight': 600}, cv, 'too late: re-reads 0.05 g k →');
+  // rules
+  const ru = el('g', {'data-step': 2}, svg);
+  const RY1 = 320, RY2 = 376;
+  el('text', {x: 0, y: RY1 + 5, 'font-size': 18, 'font-weight': 600, fill: C.ink}, ru, 'main');
+  el('line', {x1: X(lo), y1: RY1, x2: x1, y2: RY1, stroke: C.rule, 'stroke-width': 8}, ru);
+  el('line', {x1: X(150e3), y1: RY1, x2: X(350e3), y2: RY1, stroke: C.green, 'stroke-width': 8}, ru);
+  el('line', {x1: X(350e3), y1: RY1, x2: X(400e3), y2: RY1, stroke: C.hot, 'stroke-width': 8}, ru);
+  [[150e3, 'floor/due 150k', C.green], [350e3, 'force 350k', C.hot], [400e3, 'cap 400k', C.red || '#A6362B']].forEach(([cc, t, col], j) => {
+    el('line', {x1: X(cc), y1: y1, x2: X(cc), y2: y0, stroke: col, 'stroke-width': 1.5, 'stroke-dasharray': '4 4'}, ru);
+    el('text', {x: X(cc) + (j === 2 ? 8 : -6), y: RY1 + 28, 'text-anchor': j === 2 ? 'start' : 'end', 'font-size': 16, fill: col, 'font-weight': 600, class: 'mono'}, ru, t);
+  });
+  el('text', {x: 0, y: RY2 + 5, 'font-size': 18, 'font-weight': 600, fill: C.ink}, ru, 'subagents');
+  el('line', {x1: X(lo), y1: RY2, x2: x1, y2: RY2, stroke: C.rule, 'stroke-width': 8}, ru);
+  el('line', {x1: X(110e3), y1: RY2, x2: X(150e3), y2: RY2, stroke: C.gold, 'stroke-width': 8}, ru);
+  el('line', {x1: X(150e3), y1: RY2, x2: X(165e3), y2: RY2, stroke: C.hot, 'stroke-width': 8}, ru);
+  el('text', {x: X(110e3) - 6, y: RY2 + 28, 'text-anchor': 'end', 'font-size': 16, fill: C.gold, class: 'mono', 'font-weight': 600}, ru, 'warn 110k');
+  el('text', {x: X(165e3) + 6, y: RY2 + 28, 'font-size': 16, fill: C.hot, class: 'mono', 'font-weight': 600}, ru, 'due 150k · force 165k');
+  // callout
+  const co = el('g', {'data-step': 3}, svg);
+  el('rect', {x: 250, y: 20, width: 500, height: 104, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
+  el('text', {x: 266, y: 48, 'font-size': 18, 'font-weight': 700, fill: C.ink}, co, 'Why is the left side high?');
+  el('text', {x: 266, y: 74, 'font-size': 17, fill: C.ink2}, co, 'Each relay pays a fee: mostly the new session writing');
+  el('text', {x: 266, y: 96, 'font-size': 17, fill: C.ink2}, co, 'its start context at 2×. Relay early = few requests');
+  el('text', {x: 266, y: 118, 'font-size': 17, fill: C.ink2}, co, 'share it. Real replays: never relaying = +37–42%.');
+}
+
+/* ---------- slide 18: duel ---------- */
+function buildDuel() {
+  const svg = document.getElementById('duelfig');
+  const fencer = (x, dir, col, name, sub, st) => {
+    const g = el('g', {'data-step': st, transform: `translate(${x} 0)`}, svg);
+    const s = el('g', {stroke: col, 'stroke-width': 6, 'stroke-linecap': 'round', fill: 'none', transform: dir < 0 ? 'scale(-1 1)' : ''}, g);
+    el('circle', {cx: 0, cy: 150, r: 20, fill: col}, s);
+    el('path', {d: 'M0 172 L-6 240 M-6 240 L-40 300 M-6 240 L30 270 L38 306 M-2 190 L40 196 L70 176 M-2 190 L-36 170 L-44 140'}, s);
+    el('path', {d: 'M70 176 L132 139', 'stroke-width': 3}, s);
+    el('text', {x: 0, y: 340, 'text-anchor': 'middle', 'font-size': 26, fill: '#fff', class: 'cond'}, g, name);
+    el('text', {x: 0, y: 92, 'text-anchor': 'middle', 'font-size': 17, fill: '#C7D0D8'}, g, sub);
+  };
+  fencer(120, 1, '#F3B48C', 'Claude', 'proposes the plan', 0);
+  fencer(1032, -1, '#8CC7F3', 'Codex', 'another vendor, read-only', 1);
+  const msgs = [
+    [1, 'right', 'Plan v1: build X with A, B, C'],
+    [1, 'left', 'Why X at all? Is that the requirement?'],
+    [2, 'right', 'Revised: only Y is needed'],
+    [2, 'left', 'Step B breaks with empty input'],
+    [3, 'mid', 'Judge: converged → plan v2'],
+  ];
+  msgs.forEach(([st, dir, t], i) => {
+    const y = 34 + i * 54;
+    const g = el('g', {'data-step': st, class: 'rise'}, svg);
+    const w = dir === 'mid' ? 360 : 430, h = 42;
+    const x = dir === 'right' ? 286 : dir === 'left' ? 1152 - 286 - w : 576 - w / 2;
+    const col = dir === 'right' ? '#F3B48C' : dir === 'left' ? '#8CC7F3' : '#7CF2B4';
+    // speech tail on the speaker's side
+    if (dir === 'right') el('path', {d: `M${x + 22} ${y + h - 2} L${x - 10} ${y + h + 10} L${x + 8} ${y + h - 14}Z`, fill: col}, g);
+    if (dir === 'left') el('path', {d: `M${x + w - 22} ${y + h - 2} L${x + w + 10} ${y + h + 10} L${x + w - 8} ${y + h - 14}Z`, fill: col}, g);
+    el('rect', {x, y, width: w, height: h, rx: dir === 'mid' ? 21 : 12, fill: col}, g);
+    el('text', {x: dir === 'mid' ? x + w / 2 : x + 18, y: y + 28, 'font-size': 19, 'font-weight': 600, fill: '#131A20', 'text-anchor': dir === 'mid' ? 'middle' : 'start'}, g, t);
+  });
+  const fin = el('g', {'data-step': 3}, svg);
+  el('text', {x: 576, y: 330, 'text-anchor': 'middle', 'font-size': 22, fill: '#7CF2B4', class: 'mono'}, fin, 'then build, once');
+  el('circle', {cx: 576, cy: 300, r: 6, fill: '#7CF2B4', class: 'spark'}, fin);
+}
+
+/* ---------- engine ---------- */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const stage = document.querySelector('.stage');
+const spanEl = document.getElementById('span'), countEl = document.getElementById('count'), dotsEl = document.getElementById('dots');
+let cur = 0, step = 0;
+const maxStep = s => Math.max(0, ...Array.from(s.querySelectorAll('[data-step]')).map(e => +e.dataset.step));
+
+function fmtCount(v, f) {
+  if (f === '%') return Math.round(v) + '%';
+  if (f === 'x') return Math.round(v) + '×';
+  if (f === 'x1') return v.toFixed(1) + '×';
+  if (f === 'int') return Math.round(v).toLocaleString('en-US');
+  if (f === 'k') return Math.round(v) + 'k';
+  if (f === 'M1') return v.toFixed(1) + 'M';
+  return String(v);
+}
+function runCount(e) {
+  const to = +e.dataset.count, from = +(e.dataset.from || 0), f = e.dataset.fmt;
+  if (RM.matches) { e.textContent = fmtCount(to, f); return; }
+  const t0 = performance.now(), dur = 1500, id = (e._cid = (e._cid || 0) + 1);
+  const tick = t => {
+    if (e._cid !== id) return;
+    const p = Math.min(1, (t - t0) / dur), q = 1 - Math.pow(1 - p, 3);
+    e.textContent = fmtCount(from + (to - from) * q, f);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function render(fromNav) {
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides.forEach((s, k) => {
+    s.querySelectorAll('[data-step]').forEach(e => {
+      const on = k === cur && +e.dataset.step <= step;
+      if (on && !e.classList.contains('on')) {
+        e.classList.add('on');
+        e.querySelectorAll('[data-count]').forEach(runCount);
+        if (e.dataset.count) runCount(e);
+      } else if (!on) e.classList.remove('on');
+    });
+  });
+  const s = slides[cur];
+  if (fromNav !== 'keep' ) {
+    s.querySelectorAll('[data-count]').forEach(e => { if (!e.closest('[data-step]') && !e._ran) { runCount(e); e._ran = 1; } });
+  }
+  const m = maxStep(s);
+  dotsEl.innerHTML = m ? Array.from({length: m + 1}, (_, j) => '<i class="' + (j <= step ? 'on' : '') + '"></i>').join('') : '';
+  spanEl.style.width = ((cur + 1) / slides.length * 100) + '%';
+  countEl.textContent = (cur + 1) + ' / ' + slides.length;
+  const h = '#' + (cur + 1) + (step ? '.' + step : '');
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+function go(n, st) {
+  const nn = Math.max(0, Math.min(slides.length - 1, n));
+  if (nn !== cur) slides[cur].querySelectorAll('[data-count]').forEach(e => { e._ran = 0; });
+  cur = nn; step = Math.max(0, Math.min(maxStep(slides[cur]), st || 0));
+  render();
+}
+function next() { if (step < maxStep(slides[cur])) { step++; render('keep'); } else if (cur < slides.length - 1) go(cur + 1, 0); }
+function prev() { if (step > 0) { step--; render('keep'); } else if (cur > 0) go(cur - 1, maxStep(slides[cur - 1])); }
+function fromHash() {
+  const m = /^#(\d+)(?:\.(\d+))?$/.exec(location.hash);
+  go(m ? +m[1] - 1 : 0, m && m[2] ? +m[2] : 0);
+}
+function fit() {
+  const s = Math.min(innerWidth / 1280, innerHeight / 720);
+  stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+}
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'ArrowDown') { next(); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'ArrowUp') { prev(); e.preventDefault(); }
+  else if (e.key === 'Home') go(0, 0);
+  else if (e.key === 'End') go(slides.length - 1, 0);
+  else if (e.key === 'a' || e.key === 'A') { step = maxStep(slides[cur]); render('keep'); }
+  else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('show-notes');
+});
+addEventListener('click', e => { if (e.target.closest('a')) return; if (e.clientX < innerWidth / 3) prev(); else next(); });
+addEventListener('resize', fit);
+addEventListener('hashchange', () => { const h = '#' + (cur + 1) + (step ? '.' + step : ''); if (location.hash !== h) fromHash(); });
+buildStack(); buildRent(); buildQuad(); buildU(); buildDuel();
+addEventListener('DOMContentLoaded', () => {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {delimiters: [
+      {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}], throwOnError: false});
+  }
+  document.body.classList.add('math-ready');
+});
+fit();
+fromHash();
+</script>
+</body>
+</html>
