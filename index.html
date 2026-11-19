@@ -372,10 +372,10 @@
     </div>
     <svg id="rentfig" viewBox="0 0 1152 360" width="1152" height="360" role="img" aria-label="Cumulative cost of one 10k-token tool result: 20k to write, then 1k per later request, 120k after 100 requests; a taxi meter shows the running total."></svg>
   </div>
-  <p class="home">A 10k file read early in a long session costs 120k. Read narrowly: early is expensive.</p>
+  <p class="home">A 10k file read at request 1 of 100 costs 120k ITE, 12&times; its size; read 10 requests before the end, 30k. Early is expensive.</p>
   <aside class="notes">
-    <p>Say: The tool call the model writes is output, 5&times;. The tool result, say a 10k file, is written into the cache once at 2&times;: 20k. From then on every request re-reads it at 0.1&times;: 1k each. After 20 requests the rent has cost as much as the write; after 100 it is 120k, six times the write.</p>
-    <p>Arithmetic from the price ladder (slide 3), main session (1-hour cache). The 10k / 100 requests example is illustrative; a median interactive session has 53 requests (decide API), long ones several hundred.</p>
+    <p>Say: The tool call the model writes is output, 5&times;. The tool result, say a 10k file, is written into the cache once at 2&times;: 20k. From then on every request re-reads it at 0.1&times;: 1k each. After 20 requests the rent has cost as much as the write; after 100 it is 120k, six times the write. The same file read 10 requests before the end costs 20k + 10k = 30k.</p>
+    <p>Arithmetic from the price ladder (slide 3), main session (1-hour cache). The 10k / 100 requests example is illustrative; a median interactive session has 53 requests (decide API), long ones several hundred. Per token: 2 + 0.1 &times; later requests; at request 1 of 100: 2 + 10 = 12, 10k &rarr; 120k ITE (12&times; its size); 10 requests before the end: 2 + 1 = 3, 10k &rarr; 30k ITE.</p>
   </aside>
 </section>
 
@@ -383,15 +383,15 @@
 <section class="slide" id="s6">
   <header>
     <p class="eyebrow">06 &middot; <b>why long sessions explode</b> &middot; <span class="tag">model: re-reads and relay fees only</span></p>
-    <h2>Context grows in a line. <em>The bill grows in a parabola.</em></h2>
+    <h2>Each request costs a little more. <em>The session total grows in a parabola.</em></h2>
   </header>
   <div class="body" style="gap:6px">
-    <svg id="quadfig" viewBox="0 0 1152 408" width="1152" height="408" role="img" aria-label="Left: context per request grows linearly to 1M tokens, or saw-tooth with relays at 150k; the re-read bill is the shaded area under the line (times 0.1), a triangle, so twice as long means four times the area; with relays it is a row of small teeth. Right: cumulative re-read cost, quadratic without relays, near-linear with relays."></svg>
+    <svg id="quadfig" viewBox="0 0 1152 408" width="1152" height="408" role="img" aria-label="Left: context per request grows linearly to 1M tokens, or saw-tooth with relays at 150k; one request pays 0.1 times its context, a line; the session total is the sum of all requests, the shaded area under the line (times 0.1), a triangle, so twice as long means four times the triangle; with relays it is a row of small teeth. Right: re-read cost of the whole session so far, a parabola without relays, near-linear with relays."></svg>
   </div>
-  <p class="home">Double the session, 4&times; the re-read bill. A relay turns the parabola back into a line.</p>
+  <p class="home">One request: a line. A session: a parabola, 3 to 4&times; per doubling. Relays make it a line.</p>
   <aside class="notes">
-    <p>Say: Left, the context grows by about 1.8k per request; at 1M, today's context window, that is 522 requests. Each request pays a tenth of its context, so the bill is the area under this line. A line makes a triangle: double the length, four times the area. That is the parabola on the right. A relay cuts the triangle into small teeth: with a relay at 150k we restart at 50k and pay a fee each time, almost a straight line. Factor 4.4 at the end.</p>
-    <p>Model: c_k = c_0 + g k, c_0 50k, g 1.82k (mean growth per request, 3,586 work requests in 9 chains: relay-research 2026-11-02-main-handover-cost.md B3). reads(k) &asymp; 0.1 c_0 k + 0.05 g k&sup2;: 27.4M ITE at k = 522. Relay at 150k back to c_0, fee r = 120k (fast-path relay, relay deck slide 8): 9 relays, 6.2M. Factor 4.4. Only re-reads and relay fees are counted; new tokens and output are the same either way. The studies distinguish s_0 (first request) and c_0 = s_0 + 9k.</p>
+    <p>Say: Left, the context grows by about 1.8k per request; at 1M, today's context window, that is 522 requests. One request pays a tenth of its context: that is the line on the left, and it is linear. But a session pays for every one of its requests, so the session total is the sum of all of them, the area under the line. A rising line makes a triangle: double the length, four times the triangle. With the 50k we start from, doubling a session costs 3.3 to 3.7 times as much. That is the parabola on the right. A relay cuts the triangle into small teeth: with a relay at 150k we restart at 50k and pay a fee each time, almost a straight line. Factor 4.4 at the end.</p>
+    <p>Model: c_k = c_0 + g k, c_0 50k, g 1.82k (mean growth per request, 3,586 work requests in 9 chains: relay-research 2026-11-02-main-handover-cost.md B3). reads(k) &asymp; 0.1 c_0 k + 0.05 g k&sup2;: 27.4M ITE at k = 522. Doubling: reads(100) = 1.41M, reads(200) = 4.64M, ratio 3.3; reads(261) = 7.50M, reads(522) = 27.4M, ratio 3.65 (only the growth part, the triangle, quadruples). Relay at 150k back to c_0, fee r = 120k (fast-path relay, relay deck slide 8): 9 relays, 6.2M. Factor 4.4. Only re-reads and relay fees are counted; new tokens and output are the same either way. The studies distinguish s_0 (first request) and c_0 = s_0 + 9k.</p>
   </aside>
 </section>
 
@@ -523,12 +523,13 @@
       <li>Batch follow-ups inside the hour</li>
       <li>After a long break: a fresh session from a note, not <code>--resume</code></li>
       <li>Mid-session, do not change MCP tools, effort or thinking</li>
+      <li style="grid-column:1/-1">Waiting on a long job (training, build, subagent)? A keep-warm timer pings before the hour ends: ~15k ITE, not 300k.</li>
     </ul>
   </div>
   <p class="home"><span>After an hour away, a fresh session from a short note beats <code>--resume</code> by 10&times;.</span></p>
   <aside class="notes">
-    <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k.</p>
-    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
+    <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k. Waiting on a long job, a keep-warm timer fires before the hour is up (mine 50 minutes after the last request, only while the cache is still warm) and wakes the session for one tiny request, about 15k at 150k context, which renews the hour; it only pays off if you will come back to that session.</p>
+    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Keep-warm timer: mydotfiles dotfiles/claude/.claude/hooks/cc-keepwarm.sh (armed by keep-warm-guard.py; fires at newest API call + 3000 s, below the 1-hour TTL, only while a wake is still needed and the cache is warm); ping 150k &times; 0.1 = 15k vs cold 150k &times; 2 = 300k. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
   </aside>
 </section>
 
@@ -540,7 +541,7 @@
   </header>
   <div class="body">
     <div class="cols" style="grid-template-columns:1.25fr 1fr;gap:40px">
-      <svg viewBox="0 0 640 330" width="640" height="330" role="img" aria-label="Re-read cost per request: 4k at 40k context, 15k at 150k context.">
+      <svg viewBox="0 0 640 362" width="640" height="362" role="img" aria-label="Re-read cost per request: 4k at 40k context, 15k at 150k context. One typed prompt is about 25 requests: about 100k versus 375k ITE of re-reads per prompt.">
         <text x="0" y="22" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">RE-READ COST OF EVERY REQUEST</text>
         <line x1="40" y1="300" x2="620" y2="300" stroke="#131A20" stroke-width="2"/>
         <g data-step="0">
@@ -556,8 +557,12 @@
           <text x="465" y="222" text-anchor="middle" font-size="18" fill="#fff">old topic,</text>
           <text x="465" y="244" text-anchor="middle" font-size="18" fill="#fff">re-read each time</text>
         </g>
+        <g data-step="2" class="rise">
+          <text x="175" y="354" text-anchor="middle" font-size="18" font-weight="600" fill="#0A8A72">&times; ~25 requests per prompt = ~100k ITE</text>
+          <text x="465" y="354" text-anchor="middle" font-size="18" font-weight="600" fill="#B8511A">&times; ~25 = ~375k ITE</text>
+        </g>
       </svg>
-      <div class="card rise" data-step="2">
+      <div class="card rise" data-step="3">
         <h3>When the topic changes</h3>
         <ul class="acts">
           <li><code>/clear</code> or a new session</li>
@@ -569,8 +574,8 @@
   </div>
   <p class="home"><span>One task per session: <code>/clear</code> when the topic changes.</span></p>
   <aside class="notes">
-    <p>Say: Every request pays 0.1&times; its whole context. At 40k that is 4k per request; if the same small task runs at the end of a 150k session, every request pays 15k, mostly for a topic you finished an hour ago. /compact summarises in place: it is a relay done by Claude Code, cheaper than nothing but you do not control what survives. Skip if short on time.</p>
-    <p>Arithmetic: 0.1 &times; context (relay deck slide 5; agent-band.md Q1: 20-40k pays 2-4k, 110k 11k, 180k 18k per request).</p>
+    <p>Say: Every request pays 0.1&times; its whole context. At 40k that is 4k per request; if the same small task runs at the end of a 150k session, every request pays 15k, mostly for a topic you finished an hour ago. And a new topic is not one request: every prompt you type becomes about 25 requests, one per tool call, and each of them re-reads the old topic. /compact summarises in place: it is a relay done by Claude Code, cheaper than nothing but you do not control what survives. Skip if short on time.</p>
+    <p>Arithmetic: 0.1 &times; context (relay deck slide 5; agent-band.md Q1: 20-40k pays 2-4k, 110k 11k, 180k 18k per request). ~25 requests per typed prompt: slide 4 source (median of interactive sessions with a prompt count, n = 11 of 178, decide relay-cost API). Per prompt: 25 &times; 4k = 100k, 25 &times; 15k = 375k ITE.</p>
   </aside>
 </section>
 
@@ -604,7 +609,7 @@
       </div>
     </div>
   </div>
-  <p class="home">Every 10k you let in early costs ~120k by the end: print little, read narrowly.</p>
+  <p class="home">Every 10k you let in early costs ~120k ITE by the end, 12&times; its size: print little, read narrowly.</p>
   <aside class="notes">
     <p>Say: Slide 5 in practice. Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. Ask the agent to look at line ranges, heads, tails, and to answer with diffs.</p>
     <p>120k = 10k &times; (2 + 0.1 &times; 100 later requests), slide 5, illustrative. For notebooks: nbstripout or <code>jupyter nbconvert --clear-output</code> before the agent reads them.</p>
@@ -955,6 +960,7 @@ function buildRent() {
   el('line', {x1: X(20), y1: Y(40), x2: X(20), y2: y0, stroke: C.ink3, 'stroke-dasharray': '3 4'}, g);
   el('text', {x: X(20) + 8, y: Y(20) - 12, 'font-size': 16, fill: C.ink2}, g, 'after 20: rent = write');
   el('circle', {cx: X(N), cy: Y(120), r: 7, fill: C.cold}, g);
+  el('text', {x: x0 + 8, y: y1 + 34, 'font-size': 16, fill: C.ink2}, g, 'same file, 10 requests before the end: 30k');
   // taxi meter
   const m = el('g', {'data-step': 1, transform: 'translate(820 40)'}, svg);
   el('rect', {x: 0, y: 0, width: 320, height: 250, rx: 22, fill: C.ink}, m);
@@ -976,8 +982,8 @@ function buildQuad() {
   const LX = k => L.x0 + (L.x1 - L.x0) * k / K, LY = c => L.y0 - (L.y0 - L.y1) * c / 1e6;
   const YM = 28e6, RX = k => R.x0 + (R.x1 - R.x0) * k / K, RY = v => R.y0 - (R.y0 - R.y1) * v / YM;
   const axes = el('g', {'data-step': 0}, svg);
-  [[L, 'context sent with request k', [0, 250e3, 500e3, 750e3, 1e6], LY, v => v === 1e6 ? '1M' : v / 1e3 + 'k'],
-   [R, 'cumulative re-read cost, ITE', [0, 5e6, 10e6, 15e6, 20e6, 25e6], RY, v => v / 1e6 + 'M']].forEach(([P, title, ticks, Yf, f]) => {
+  [[L, 'context sent with request k  (request k pays 0.1 × this)', [0, 250e3, 500e3, 750e3, 1e6], LY, v => v === 1e6 ? '1M' : v / 1e3 + 'k'],
+   [R, 're-read cost of the whole session so far, ITE', [0, 5e6, 10e6, 15e6, 20e6, 25e6], RY, v => v / 1e6 + 'M']].forEach(([P, title, ticks, Yf, f]) => {
     el('line', {x1: P.x0, y1: P.y0, x2: P.x1 + 6, y2: P.y0, stroke: C.ink, 'stroke-width': 2}, axes);
     el('line', {x1: P.x0, y1: P.y0, x2: P.x0, y2: P.y1 - 10, stroke: C.ink, 'stroke-width': 2}, axes);
     ticks.forEach(t => {
@@ -1008,8 +1014,8 @@ function buildQuad() {
   el('text', {x: LX(40), y: LY(140e3) - 8, 'font-size': 17, fill: C.hot, transform: `rotate(-31.5 ${LX(40)} ${LY(140e3) - 8})`}, s1, '+1.82k per request');
   const s2 = el('g', {'data-step': 3}, svg);
   el('path', {class: 'draw slow', pathLength: 1, d: dR, fill: 'none', stroke: C.hot, 'stroke-width': 4}, s2);
-  el('text', {x: RX(K) - 34, y: RY(noRel) + 6, 'text-anchor': 'end', 'font-size': 36, fill: C.hot, class: 'cond', 'data-count': noRel / 1e6, 'data-fmt': 'M1'}, s2, fmtK(noRel));
-  el('text', {x: RX(K) - 50, y: RY(noRel) + 28, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, s2, 'no relay');
+  el('text', {x: RX(K) - 34, y: RY(noRel) + 22, 'text-anchor': 'end', 'font-size': 36, fill: C.hot, class: 'cond', 'data-count': noRel / 1e6, 'data-fmt': 'M1'}, s2, fmtK(noRel));
+  el('text', {x: RX(K) - 50, y: RY(noRel) + 44, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, s2, 'no relay');
   const fo = el('foreignObject', {x: R.x0 + 12, y: R.y1 + 8, width: 330, height: 66}, s2);
   const div = document.createElement('div');
   div.className = 'qformula';
@@ -1031,13 +1037,14 @@ function buildQuad() {
   }
   dL2 += 'L' + LX(K).toFixed(1) + ' ' + LY(c).toFixed(1);
   el('path', {d: `M${LX(0)} ${L.y0} L` + dL2.slice(1) + `L${LX(K)} ${L.y0}Z`, fill: C.green, opacity: 0.3}, relG);
-  // annotation: bill = area; inset: 2x longer -> 4x the area
+  // annotation: session total = area; inset: 2x longer -> 4x the triangle
   const ann = el('g', {'data-step': 2}, svg);
-  el('text', {x: L.x1 - 8, y: 205, 'text-anchor': 'end', 'font-size': 17, 'font-weight': 700, fill: C.cold}, ann, 'bill = area under the line');
-  el('text', {x: L.x1 - 8, y: 227, 'text-anchor': 'end', 'font-size': 17, fill: C.cold}, ann, '(× 0.1)');
+  el('text', {x: L.x1 - 8, y: 190, 'text-anchor': 'end', 'font-size': 17, 'font-weight': 700, fill: C.cold}, ann, 'session total');
+  el('text', {x: L.x1 - 8, y: 211, 'text-anchor': 'end', 'font-size': 17, fill: C.cold}, ann, '= sum of all requests');
+  el('text', {x: L.x1 - 8, y: 232, 'text-anchor': 'end', 'font-size': 17, fill: C.cold}, ann, '= area under the line (× 0.1)');
   const ins = el('g', {transform: 'translate(82 34)'}, ann);
   el('rect', {x: 0, y: 0, width: 212, height: 126, fill: '#fff', stroke: C.rule, 'stroke-width': 1.5}, ins);
-  el('text', {x: 106, y: 21, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: C.ink}, ins, '2× longer → 4× the area');
+  el('text', {x: 106, y: 21, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: C.ink}, ins, '2× longer → 4× the triangle');
   const ta = 40, th = 30, bx = 18, by = 100;
   el('path', {d: `M${bx} ${by} L${bx + ta} ${by} L${bx + ta} ${by - th}Z`, fill: C.cold}, ins);
   el('path', {d: `M${bx} ${by} L${bx + 2 * ta} ${by} L${bx + 2 * ta} ${by - 2 * th}Z M${bx + ta} ${by} L${bx + ta} ${by - th} L${bx + 2 * ta} ${by - th} M${bx + ta} ${by} L${bx + 2 * ta} ${by - th}`, fill: 'none', stroke: C.cold, 'stroke-width': 1.5}, ins);
