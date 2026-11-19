@@ -155,46 +155,54 @@
   .tile.fin .t{color:#fff}
   .tile.fin .v{color:#C7D0D8}
 
-  /* 8 start lean */
+  /* 8 start lean + stable first */
   .tbar{display:flex;align-items:stretch;border:2px solid var(--ink);background:var(--card);height:96px;position:relative}
-  .tbar>div{min-width:0;box-sizing:border-box;padding:8px 12px;border-right:1px solid var(--ink);overflow:hidden}
+  .tbar>div{min-width:0;box-sizing:border-box;padding:6px 12px;border-right:1px solid var(--ink);overflow:hidden}
   .tbar>div:last-child{border-right:0}
-  .tbar b{display:block;font-size:19px;color:var(--ink);white-space:nowrap}
-  .tbar span{display:block;font-size:17px;color:var(--ink2);white-space:nowrap}
+  .tbar b{display:block;font-size:17px;color:var(--ink);white-space:nowrap}
+  .tbar span{display:block;font-size:14.5px;line-height:1.3;color:var(--ink2);white-space:nowrap}
   .tbar .warm{background:var(--cold-tint)}
   .tbar .wr{background:var(--hot-tint)}
   .tbar .pr{background:var(--hot)}
-  .scale{font-family:var(--mono);font-size:15px;color:var(--ink3);display:flex;justify-content:space-between;margin-top:4px}
+  .scale{font-family:var(--mono);font-size:13px;color:var(--ink3);display:flex;justify-content:space-between;margin-top:3px}
   .duo{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:22px;align-items:stretch}
   .stat{background:var(--card);border:1px solid var(--rule);border-top:4px solid var(--hot);padding:12px 16px}
   .stat b{display:block;font-family:var(--cond);font-size:44px;line-height:1.02;color:var(--hot)}
   .stat span{display:block;font-size:17.5px;color:var(--ink2);line-height:1.35;margin-top:4px}
-  .stat span.tag{display:inline-block;font-size:13px;color:var(--gold);margin-top:8px}
   .stat.cold{border-top-color:var(--cold)}
   .stat.cold b{color:var(--cold)}
-
-  /* 9 stable first */
-  .ba{display:grid;grid-template-columns:90px 1fr 120px;gap:14px;align-items:center}
-  .ba .lab{font-family:var(--mono);font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
-  .ba .cost{font-family:var(--cond);font-weight:700;font-size:40px;text-align:right}
-  .ba .tbar{height:66px}
+  .ba{display:grid;grid-template-columns:76px 1fr 172px;gap:14px;align-items:center}
+  .ba .lab{font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+  .ba .cost{font-family:var(--cond);font-weight:700;font-size:40px;line-height:1;text-align:right}
+  .ba .cost small{font-size:20px}
+  .ba .cost .dl{display:block;font-style:normal;font-size:17px;font-weight:600;margin-top:4px;white-space:nowrap}
   .ba .tbar>div{display:flex;flex-direction:column;justify-content:center;transition:background .8s ease}
   .cp{box-shadow:inset -6px 0 0 var(--green)}
-  .cpin{position:absolute;top:-26px;transform:translateX(-100%);font-family:var(--mono);font-size:15px;color:var(--green);white-space:nowrap}
-  .mini{border-collapse:collapse;font-size:19px;width:100%}
-  .mini td{padding:6px 10px;border-bottom:1px solid var(--rule);color:var(--ink2)}
-  .mini td.n{font-family:var(--mono);color:var(--ink);text-align:right}
+  .tbar span.cpin{position:absolute;top:-24px;transform:translateX(-100%);font-family:var(--mono);font-size:14px;color:var(--green);white-space:nowrap}
+  .tbar span.wnote{position:absolute;top:-24px;right:0;font-family:var(--mono);font-size:14px;color:var(--hot)}
+  #s8 .how{font-size:16.5px;line-height:1.35}
+  #s8 .how code{font-size:.84em}
+  #s8 .kick{margin-bottom:6px}
+  #s8 .hlrow{display:flex;align-items:center;gap:12px}
+  #s8 .hlrow b{font-family:var(--cond);font-size:28px;color:var(--ink)}
+  #s8 .hlrow span{font-family:var(--mono);font-size:14px;color:var(--ink3)}
+  #s8 .sm{font-size:15.5px;line-height:1.35;margin-top:5px}
+  #s8 .card{padding:10px 18px 4px}
+  #s8 .card h3{margin-bottom:6px}
+  #s8 .acts li{font-size:16px;line-height:1.28;margin-bottom:4px}
+  #s8 .acts li::before{top:3px}
+  #s8 .acts li::after{top:6px}
 
-  /* 12 feed sparingly */
-  #s12 li{font-size:23px;margin-bottom:14px}
-  #s12 .card{padding:26px 32px 14px}
-  #s12 h3{font-size:16px;margin-bottom:16px}
-  #s12 .acts li{padding-left:34px}
-  #s12 .acts li::before{top:9px;width:20px;height:20px}
-  #s12 .acts li::after{top:13px;left:7px}
-  #s12 .ok .acts li::before{background:var(--green)}
+  /* 11 feed sparingly */
+  #s11 li{font-size:23px;margin-bottom:14px}
+  #s11 .card{padding:26px 32px 14px}
+  #s11 h3{font-size:16px;margin-bottom:16px}
+  #s11 .acts li{padding-left:34px}
+  #s11 .acts li::before{top:9px;width:20px;height:20px}
+  #s11 .acts li::after{top:13px;left:7px}
+  #s11 .ok .acts li::before{background:var(--green)}
 
-  /* 18 finale */
+  /* 17 finale */
   .slide.dark{background:radial-gradient(120% 90% at 50% 20%,#1C2730 0%,#0E1418 70%);color:#E9EDF0}
   .slide.dark h2{color:#fff}
   .slide.dark .eyebrow{color:#8D9AA6}
@@ -207,7 +215,7 @@
   @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
   .ball{offset-rotate:0deg}
 
-  /* 17 remember */
+  /* 16 remember */
   .three{display:flex;flex-direction:column;gap:6px}
   .three div{font-family:var(--cond);font-weight:700;font-size:84px;line-height:1.02;letter-spacing:-.02em}
   .three div i{font-style:normal;font-family:var(--mono);font-size:22px;color:var(--ink3);font-weight:500;display:inline-block;width:66px}
@@ -247,7 +255,7 @@
   <p class="prev">Previous talk: <a href="https://glensk.github.io/coding-agents-talk/">glensk.github.io/coding-agents-talk</a></p>
   <aside class="notes">
     <p>Say: You mostly use Claude Code as a chat in the terminal. Today: why the same work can cost 1&times; or 5&times;, and nine habits that keep it at 1&times;. Most of you are on a flat seat, so "cost" means how fast you hit the usage limit: the arithmetic is the same.</p>
-    <p>Sources: 97% = cache-read share of all tokens, decide relay-cost API, 1,765 sessions since 2026-10-20 (scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich). 20&times; = 300k vs 15k ITE for a 150k context (slide 10). 4.4&times; = model of slide 6 (c_0 50k, g 1.82k, to 1M context, relay at 150k, fee 120k): 27.4M vs 6.2M ITE; re-reads and relay fees only.</p>
+    <p>Sources: 97% = cache-read share of all tokens, decide relay-cost API, 1,765 sessions since 2026-10-20 (scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich). 20&times; = 300k vs 15k ITE for a 150k context (slide 9). 4.4&times; = model of slide 6 (c_0 50k, g 1.82k, to 1M context, relay at 150k, fee 120k): 27.4M vs 6.2M ITE; re-reads and relay fees only.</p>
   </aside>
 </section>
 
@@ -408,86 +416,70 @@
   </div>
   <p class="home">Two levers behind all nine: carry less context, and keep the cache warm.</p>
   <aside class="notes">
-    <p>Say: Here is the map. 1-5 are about what goes into the context and when; 6-7 about splitting work across sessions; 8 about the price per token; 9, the finale, about not doing work at all. On the 10-minute path skip 2, 4 and 8.</p>
-    <p>Numbers are from the slides that follow (each tile number = the slide's badge): 72k model (slide 8), &minus;40% measured (9), 20&times; (10), 4k vs 15k (11), 120k (5/12), 9k vs 41k measured (13), fee 120k / 14 requests (14), Haiku $0.10 vs Opus $4 per M input (16).</p>
+    <p>Say: Here is the map. 1-5 are about what goes into the context and when; 6-7 about splitting work across sessions; 8 about the price per token; 9, the finale, about not doing work at all. On the 10-minute path skip habits 4 and 8, and say habit 2 in one sentence (it shares slide 8 with habit 1).</p>
+    <p>Numbers are from the slides that follow (each tile number = the slide's badge; habits 1 and 2 share slide 8): 72k model and &minus;40% measured (slide 8), 20&times; (9), 4k vs 15k (10), 120k (5/11), 9k vs 41k measured (12), fee 120k / 14 requests (13), Haiku $0.10 vs Opus $4 per M input (15).</p>
   </aside>
 </section>
 
-<!-- ================= 8 START LEAN ================= -->
+<!-- ================= 8 START LEAN + STABLE FIRST ================= -->
 <section class="slide" id="s8">
   <header>
-    <p class="eyebrow"><span class="tno">1</span><svg class="ic"><use href="#i1"/></svg><b>start lean</b> &middot; what request 1 carries</p>
+    <p class="eyebrow"><span class="tno">1</span><svg class="ic"><use href="#i1"/></svg><b>start lean</b> &middot; <span class="tno">2</span><svg class="ic"><use href="#i2"/></svg><b>stable first, variable last</b></p>
     <h2>Every session starts with <em>~32k tokens</em> before you say a word.</h2>
   </header>
-  <div class="body">
-    <div>
-      <div class="tbar" data-step="0">
-        <div class="warm" style="flex:12000"><b>Tools + system prompt</b><span>~12k &middot; MCP tools add here</span></div>
-        <div class="wr" style="flex:11700"><b>Instructions</b><span>~11.7k &middot; CLAUDE.md chain</span></div>
-        <div class="wr" style="flex:7900"><b>Listings</b><span>~7.9k &middot; skills, agents</span></div>
-        <div class="pr" style="flex:900" title="your prompt"></div>
+  <div class="body" style="gap:9px;justify-content:flex-start;padding-top:8px">
+    <div class="ba" data-step="0"><span class="lab">before</span>
+      <div>
+        <div class="tbar" style="height:70px">
+          <span class="cpin" style="left:36.9%">cache point &#9660;</span>
+          <span class="wnote">after it: written 2&times; at every session start</span>
+          <div class="warm cp" style="flex:12000"><b>tools + system prompt</b><span>~12k &middot; read 0.1&times;</span></div>
+          <div class="wr" style="flex:11700"><b>global instructions ~11.7k</b><span>CLAUDE.md files, loaded</span><span>into every session</span></div>
+          <div class="wr" style="flex:7900"><b>listings ~7.9k</b><span>skills, agents</span></div>
+          <div class="pr" style="flex:900" title="your prompt"></div>
+        </div>
+        <div class="scale"><span>request 1 of every session; each box as wide as its tokens</span><span>your prompt &#9650; ~32k</span></div>
       </div>
-      <div class="scale"><span>0</span><span>each box as wide as its tokens</span><span>your prompt &#9650; ~32k</span></div>
-    </div>
-    <div class="duo">
-      <div class="stat rise" data-step="1"><b>72k ITE</b><span>per 10k of start-up context, over a median 53-request session <span class="tag">model</span></span></div>
-      <div class="stat cold rise" data-step="1"><b>50&ndash;95k vs 420</b><span><code>claude -p</code> started in a big folder vs a bare system prompt in an empty one</span></div>
-      <div class="card rise" data-step="2">
+      <span class="cost" style="color:var(--hot)">50.1k<small> ITE</small></span></div>
+    <div class="ba rise" data-step="1" style="margin-top:12px"><span class="lab">after</span>
+      <div class="tbar" style="height:56px">
+        <span class="cpin" style="left:72.9%">cache point &#9660;</span>
+        <div class="warm" style="flex:12000"><b>tools + system prompt</b><span>read 0.1&times;</span></div>
+        <div class="warm cp" style="flex:11700"><b>global instructions</b><span>moved in front: read 0.1&times;</span></div>
+        <div class="wr" style="flex:7900"><b>listings</b><span>written 2&times;</span></div>
+        <div class="pr" style="flex:900"></div>
+      </div>
+      <span class="cost" style="color:var(--green)">30.1k<small> ITE</small><i class="dl">&minus;40% per session start</i></span></div>
+    <p class="how rise" data-step="1"><b>How:</b> pass your global <code>CLAUDE.md</code> text via <code>--append-system-prompt-file</code>; drop its auto-loaded copy with <code>claudeMdExcludes</code>.</p>
+    <p class="how rise" data-step="1"><b>Working all day?</b> The cached (<b style="color:var(--cold)">blue</b>) part is written once and then read at 0.1&times; by every new session, as long as one starts within the hour.</p>
+    <div class="cols" style="grid-template-columns:1fr 1.45fr;gap:24px;align-items:start;margin-top:2px">
+      <div class="hl rise" data-step="2">
+        <p class="kick" style="color:var(--cold)">headless: <code>claude -p</code>, bare</p>
+        <div class="hlrow"><div class="tbar" style="height:30px;width:12px;flex:none"><div class="wr" style="flex:1;padding:0"></div></div><b>~420 tokens &middot; ~0.8k ITE</b><span>(420 &times; 2)</span></div>
+        <p class="sm">own system prompt, no tools, empty folder: no CLAUDE.md, no skill or agent listings</p>
+        <p class="sm">The same <code>claude -p</code> started in a big folder carries 50&ndash;95k tokens.</p>
+      </div>
+      <div class="card rise" data-step="3">
         <h3>Do</h3>
         <ul class="acts">
           <li>Remove MCP servers and tools you do not use</li>
+          <li>Ask the agent which tools it used in the last month and the last 6 months, and how often; drop the rest (e.g. a feedback tool)</li>
           <li>Keep <code>CLAUDE.md</code> short; how-tos into skills (load on demand)</li>
+          <li>Put what never changes first</li>
           <li>Check with <code>/context</code></li>
         </ul>
       </div>
     </div>
   </div>
-  <p class="home">What you load at start, every request pays for: load what you need, when you need it.</p>
+  <p class="home">What you load at start, every request pays for. Load little, and put what never changes first.</p>
   <aside class="notes">
-    <p>Say: Before your first word, request 1 already carries tools, system prompt, your instruction files and listings of skills and agents: about 32k in my setup. Each 10k there costs 20k to write and then 1k on every request. Run /context to see yours.</p>
-    <p>Sources: bar = relay deck slide 1 (first request of 12 sessions in ~/, 2026-11-16; sizes approximate; prompt enlarged to be visible). Instruction chain 11,753 tokens / 29.4 KB: startup-context.py -C ~ (2026-11-19). 72k = 2 &times; 10k + 0.1 &times; 10k &times; 52 later requests, median interactive session 53 requests (decide API, 178 sessions), a model. Headless: no-tools claude -p in the vault 50-95k context; bare system prompt in a neutral folder ~420 tokens (measured, tp#362).</p>
+    <p>Say: Before your first word, request 1 already carries tools, system prompt, your instruction files (the CLAUDE.md chain) and listings of skills and agents: about 32k in my setup. Each 10k there costs 20k to write and then 1k on every request. The cache reuses a prefix only if it is byte-identical up to a cache point. My global instructions sat after that point, so every new session wrote them again; passing them as part of the system prompt, in front of the cache point, cut the session start by 40%. Working all day, the blue part is written once and then only read. A bare <code>claude -p</code> in an empty folder carries 420 tokens. Run /context to see yours. Short on time: say habit 2 in one sentence.</p>
+    <p>Sources: bar = relay deck slide 1 (first request of 12 sessions in ~/, 2026-11-16; sizes approximate; prompt enlarged to be visible). Instruction chain 11,753 tokens / 29.4 KB: startup-context.py -C ~ (2026-11-19). Before/after = relay deck slides 1-2; median first request of 53 interactive sessions before (2026-11-13..16) and 50 after (2026-11-16..18), ITE with read 0.1&times;, write 2&times;: 50.1k vs 30.1k = &minus;40%; cold start (cache expired) ~68k (9 of 59 after). ~22 sessions a day &asymp; 0.45M ITE a day saved. Block = 11.7k tokens, ~30 KB. Mechanism: mydotfiles bin/cc-startup-sysprompt.py renders the global CLAUDE.md and its @ imports into a file that dotfiles/claude/.claude/claude-wrapper.sh passes with --append-system-prompt-file (cached system prefix), plus a --settings file whose claudeMdExcludes drops the auto-loaded copy (tp#2168). 72k (overview tile, habit 1) = 2 &times; 10k + 0.1 &times; 10k &times; 52 later requests, median interactive session 53 requests (decide API, 178 sessions), a model. Headless: no-tools claude -p in the vault 50-95k context; bare system prompt in a neutral folder ~420 tokens (measured, tp#362); ITE 420 &times; 2 &asymp; 0.8k.</p>
   </aside>
 </section>
 
-<!-- ================= 9 STABLE FIRST ================= -->
+<!-- ================= 9 STAY WARM ================= -->
 <section class="slide" id="s9">
-  <header>
-    <p class="eyebrow"><span class="tno">2</span><svg class="ic"><use href="#i2"/></svg><b>stable first, variable last</b> &middot; measured</p>
-    <h2>The cache reuses only an <em>identical prefix</em>.</h2>
-  </header>
-  <div class="body" style="gap:30px">
-    <div class="ba" style="margin-top:22px"><span class="lab">before</span>
-      <div class="tbar">
-        <span class="cpin" style="left:37.3%">cache point &#9660;</span>
-        <div class="warm cp" style="flex:12000"><b>tools + system</b><span>read 0.1&times;</span></div>
-        <div class="wr" style="flex:11700"><b>global instructions</b><span>rewritten 2&times;</span></div>
-        <div class="wr" style="flex:8800"><b>prompt, listings</b><span>written 2&times;</span></div>
-      </div><span class="cost" style="color:var(--hot)">50.1k</span></div>
-    <div class="ba rise" data-step="1"><span class="lab">after</span>
-      <div class="tbar">
-        <span class="cpin" style="left:73.5%">cache point &#9660;</span>
-        <div class="warm" style="flex:12000"><b>tools + system</b><span>read 0.1&times;</span></div>
-        <div class="warm cp" style="flex:11700"><b>global instructions</b><span>moved: read 0.1&times;</span></div>
-        <div class="wr" style="flex:8800"><b>prompt, listings</b><span>written 2&times;</span></div>
-      </div><span class="cost" style="color:var(--green)">30.1k</span></div>
-    <div class="cols rise" data-step="2" style="grid-template-columns:1fr 1fr;align-items:center">
-      <table class="mini">
-        <tr><td>first request, before (53 sessions)</td><td class="n">50.1k ITE</td></tr>
-        <tr><td>first request, after (50 sessions)</td><td class="n"><b>30.1k ITE</b></td></tr>
-        <tr><td>cold start (cache expired)</td><td class="n">~68k ITE</td></tr>
-      </table>
-      <p class="big" style="font-size:96px;text-align:center">&minus;40%<span style="display:block;font-family:var(--sans);font-weight:400;font-size:19px;color:var(--ink2);margin-top:6px">per session start, same text, new place</span></p>
-    </div>
-  </div>
-  <p class="home">One changed character re-writes everything after it: put what never changes first.</p>
-  <aside class="notes">
-    <p>Say: The cache reuses a prefix only if it is byte-identical up to a cache point. My global instructions sat after that point, together with my prompt, so every new session wrote them again. Moving them into the system prompt, in front of the cache point, cut the session start by 40%. Skip if short on time.</p>
-    <p>Sources: relay deck slides 1-2; median first request of 53 interactive sessions before (2026-11-13..16) and 50 after (2026-11-16..18), ITE with read 0.1&times;, write 2&times;; cold start ~68k (9 of 59 after). ~22 sessions a day &asymp; 0.45M ITE a day saved. Block = 11.7k tokens, ~30 KB.</p>
-  </aside>
-</section>
-
-<!-- ================= 10 STAY WARM ================= -->
-<section class="slide" id="s10">
   <header>
     <p class="eyebrow"><span class="tno">3</span><svg class="ic"><use href="#i3"/></svg><b>stay warm, never resume cold</b></p>
     <h2>Answer ten minutes later, <em>pay 20&times;</em>.</h2>
@@ -536,12 +528,12 @@
   <p class="home"><span>After an hour away, a fresh session from a short note beats <code>--resume</code> by 10&times;.</span></p>
   <aside class="notes">
     <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k.</p>
-    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 9). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
+    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
   </aside>
 </section>
 
-<!-- ================= 11 ONE TASK ONE SESSION ================= -->
-<section class="slide" id="s11">
+<!-- ================= 10 ONE TASK ONE SESSION ================= -->
+<section class="slide" id="s10">
   <header>
     <p class="eyebrow"><span class="tno">4</span><svg class="ic"><use href="#i4"/></svg><b>one task, one session</b></p>
     <h2>A new topic in an old session <em>pays rent on the old one</em>.</h2>
@@ -582,8 +574,8 @@
   </aside>
 </section>
 
-<!-- ================= 12 FEED SPARINGLY ================= -->
-<section class="slide" id="s12">
+<!-- ================= 11 FEED SPARINGLY ================= -->
+<section class="slide" id="s11">
   <header>
     <p class="eyebrow"><span class="tno">5</span><svg class="ic"><use href="#i5"/></svg><b>feed the context sparingly</b></p>
     <h2>What enters the context <em>stays and pays rent</em>.</h2>
@@ -619,8 +611,8 @@
   </aside>
 </section>
 
-<!-- ================= 13 SUBAGENTS ================= -->
-<section class="slide" id="s13">
+<!-- ================= 12 SUBAGENTS ================= -->
+<section class="slide" id="s12">
   <header>
     <p class="eyebrow"><span class="tno">6</span><svg class="ic"><use href="#i6"/></svg><b>delegate to subagents</b> &middot; lean and BIG</p>
     <h2>Let a helper do the reading. <em>Keep only its report.</em></h2>
@@ -666,8 +658,8 @@
   </aside>
 </section>
 
-<!-- ================= 14 RELAY ================= -->
-<section class="slide" id="s14">
+<!-- ================= 13 RELAY ================= -->
+<section class="slide" id="s13">
   <header>
     <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>relay</b> &middot; hand over the baton</p>
     <h2>Write a note, <em>start fresh</em>, keep going.</h2>
@@ -720,8 +712,8 @@
   </aside>
 </section>
 
-<!-- ================= 15 WHEN TO RELAY ================= -->
-<section class="slide" id="s15">
+<!-- ================= 14 WHEN TO RELAY ================= -->
+<section class="slide" id="s14">
   <header>
     <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>when to relay</b> &middot; <span class="tag">model, fast-path fee r = 120k</span></p>
     <h2>Too early is worst. <em>A bit late is cheap.</em></h2>
@@ -736,8 +728,8 @@
   </aside>
 </section>
 
-<!-- ================= 16 RIGHT MODEL ================= -->
-<section class="slide" id="s16">
+<!-- ================= 15 RIGHT MODEL ================= -->
+<section class="slide" id="s15">
   <header>
     <p class="eyebrow"><span class="tno">8</span><svg class="ic"><use href="#i8"/></svg><b>right model, right effort</b> &middot; list price per million tokens</p>
     <h2>The same token costs <em>40&times; less</em> on a small model.</h2>
@@ -769,10 +761,10 @@
   </aside>
 </section>
 
-<!-- ================= 17 REMEMBER ================= -->
-<section class="slide" id="s17">
+<!-- ================= 16 REMEMBER ================= -->
+<section class="slide" id="s16">
   <header>
-    <p class="eyebrow">17 &middot; <b>one slide to remember</b></p>
+    <p class="eyebrow">16 &middot; <b>one slide to remember</b></p>
   </header>
   <div class="body">
     <div class="three">
@@ -785,12 +777,12 @@
   <p class="home">Small context, warm cache, timely relay: same work, a fraction of the limit.</p>
   <aside class="notes">
     <p>Say: If you remember three things: keep the context small (start lean, read narrowly, delegate), keep the cache warm (reply within the hour, start fresh after a break), and hand over at about 150k. And today: run /context once.</p>
-    <p>No new numbers; 150k = our relay floor (cc_relay.py) and the upper edge of the model's flat band (slide 15).</p>
+    <p>No new numbers; 150k = our relay floor (cc_relay.py) and the upper edge of the model's flat band (slide 14).</p>
   </aside>
 </section>
 
-<!-- ================= 18 CODEX DEBATE ================= -->
-<section class="slide dark" id="s18">
+<!-- ================= 17 CODEX DEBATE ================= -->
+<section class="slide dark" id="s17">
   <header>
     <p class="eyebrow"><span class="tno">9</span><svg class="ic" style="color:#F3B48C"><use href="#i9"/></svg><b style="color:#F3B48C">attack the plan before you build</b> &middot; the Codex debate</p>
     <h2>The cheapest token is the one <em>for work you never do</em>.</h2>
@@ -814,7 +806,7 @@
   <span>COST-EFFICIENT LLM USE</span>
   <div class="track"><div class="span" id="span"></div></div>
   <span class="dots" id="dots"></span>
-  <span class="count" id="count">1 / 18</span>
+  <span class="count" id="count">1 / 17</span>
   <span class="hint">&larr; &rarr; &middot; A all &middot; N notes</span>
 </div>
 </div>
@@ -1064,7 +1056,7 @@ function buildQuad() {
   el('text', {x: RX(190), y: RY(15e6) + 28, 'text-anchor': 'middle', 'font-size': 18, fill: C.ink2}, s3, 'cheaper with relays');
 }
 
-/* ---------- slide 15: U-curve ---------- */
+/* ---------- slide 14: U-curve ---------- */
 function buildU() {
   const svg = document.getElementById('ufig');
   const c0 = 50e3, g = 1820, r = 120e3, YM = 50e3;
@@ -1135,7 +1127,7 @@ function buildU() {
   el('text', {x: 266, y: 118, 'font-size': 17, fill: C.ink2}, co, 'share it. Real replays: never relaying = +37–42%.');
 }
 
-/* ---------- slide 18: duel ---------- */
+/* ---------- slide 17: duel ---------- */
 function buildDuel() {
   const svg = document.getElementById('duelfig');
   const fencer = (x, dir, col, name, sub, st) => {
