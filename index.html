@@ -340,12 +340,12 @@
       <span><i class="sw-out"></i>output 5&times;</span>
       <span class="tag ill">sizes illustrative</span>
     </div>
-    <svg id="stackfig" viewBox="0 0 1152 432" width="1152" height="432" style="flex-shrink:0" role="img" aria-label="Seven requests: each bar re-sends all earlier parts and adds new ones; below, the asks you typed, and the ITE cost of each request."></svg>
+    <svg id="stackfig" viewBox="0 0 1152 432" width="1152" height="432" style="flex-shrink:0" role="img" aria-label="Seven requests: each bar re-sends all earlier parts and adds new ones; below, the asks you typed, and the ITE cost of each request. After an axis break, two typical later requests (k = 50 at 141k context, k = 200 at 414k) whose ITE is mostly re-read: 20.2k and 47.5k."></svg>
   </div>
   <p class="home">You type 1 prompt, the agent makes ~25 requests, and each re-reads everything before it.</p>
   <aside class="notes">
-    <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows.</p>
-    <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm.</p>
+    <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows. In the first requests the write of new tokens dominates; by request 50 the re-read is the largest part, and by 200 it is almost everything.</p>
+    <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm. The two later bars (k = 50, 200) follow the slide-6 model: c_k = 50k + 1.82k k (141k, 414k), 1.8k new (written 2&times;) and 0.5k output (5&times;) per request; mean output per request in the 30-day data is 0.53k. k = 50: read 14.1k + write 3.6k + output 2.5k = 20.2k; k = 200: 41.4k + 3.6k + 2.5k = 47.5k.</p>
   </aside>
 </section>
 
@@ -847,7 +847,7 @@ function buildStack() {
     {ask: 2, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
     {ask: 2, add: [['tool call + result', 6.5]], out: ['answer', 1]},
   ];
-  const X0 = 196, DX = 136, W = 78, BASE = 222, PX = 3.2, IBASE = 408, IPX = 3.2;
+  const X0 = 190, DX = 100, W = 70, BASE = 222, PX = 3.2, IBASE = 408, IPX = 2.1;
   const steps = [0, 1, 1, 2, 2, 2, 2];
   let prev = 0;
   el('text', {x: 0, y: 60, 'font-size': 19, 'font-weight': 600, fill: C.ink}, svg, 'context sent');
@@ -878,15 +878,38 @@ function buildStack() {
     el('rect', {x: x + 8, y: oy, width: W - 16, height: 12, fill: C.out, rx: 2}, g);
     el('text', {x: x + W / 2, y: oy - 7, 'text-anchor': 'middle', 'font-size': 15, fill: C.out}, g, q.out[0]);
     el('text', {x: x + W / 2, y: BASE + 24, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 600, fill: C.ink}, g, 'k = ' + (i + 1));
-    // ITE row
-    const ite = [[read * 0.1, C.cold], [wrote * 2, C.hot], [q.out[1] * 5, C.out]];
-    const gi = el('g', {'data-step': 3}, svg);
+    iteBar(x, read * 0.1, wrote * 2, q.out[1] * 5, 3, false);
+  });
+  // ITE bar: read, write, output parts (k ITE), one common scale IPX for all nine bars
+  function iteBar(x, rd, wr, ou, st, late) {
+    const gi = el('g', {'data-step': st}, svg);
     let yi = IBASE;
     const ib = el('g', {class: 'grow'}, gi);
-    ite.forEach(p => { const h = p[0] * IPX; yi -= h; el('rect', {x: x + 12, y: yi, width: W - 24, height: h, fill: p[1]}, ib); });
-    el('text', {x: x + W / 2, y: yi - 6, 'text-anchor': 'middle', 'font-size': 16, fill: C.ink, class: 'mono'}, gi, (ite[0][0] + ite[1][0] + ite[2][0]).toFixed(1) + 'k');
-    // read part label
-    el('text', {x: x + W / 2, y: IBASE + 20, 'text-anchor': 'middle', 'font-size': 15, fill: C.cold, class: 'mono'}, gi, 'read ' + ite[0][0].toFixed(1));
+    [[rd, C.cold], [wr, C.hot], [ou, C.out]].forEach(p => { const h = p[0] * IPX; yi -= h; el('rect', {x: x + 12, y: yi, width: W - 24, height: h, fill: p[1]}, ib); });
+    el('text', {x: x + W / 2, y: yi - 6, 'text-anchor': 'middle', 'font-size': 16, fill: C.ink, class: 'mono'}, gi, (rd + wr + ou).toFixed(1) + 'k');
+    // read part label (bold and larger for the later requests: they are the point)
+    el('text', {x: x + W / 2, y: IBASE + 20, 'text-anchor': 'middle', 'font-size': late ? 17 : 15, 'font-weight': late ? 700 : 400, fill: C.cold, class: 'mono'}, gi, 'read ' + rd.toFixed(1));
+    return gi;
+  }
+  // two typical later requests after an axis break: c_k = 50k + 1.82k k, 1.8k new and 0.5k output per request
+  const XB = X0 + 7 * DX - 15, XL = X0 + 7 * DX + 30, DXL = 125;
+  const late = el('g', {'data-step': 4}, svg);
+  [[BASE, 'context'], [IBASE, 'ite']].forEach(([yb]) => {
+    el('rect', {x: XB - 9, y: yb - 10, width: 18, height: 20, fill: '#E9EDF0'}, late);
+    el('path', {d: `M${XB - 9} ${yb + 7} l6 -14 M${XB + 3} ${yb + 7} l6 -14`, stroke: C.ink, 'stroke-width': 2}, late);
+  });
+  el('text', {x: XB, y: BASE - 40, 'text-anchor': 'middle', 'font-size': 26, 'font-weight': 700, fill: C.ink3}, late, '…');
+  el('text', {x: XB, y: IBASE - 40, 'text-anchor': 'middle', 'font-size': 26, 'font-weight': 700, fill: C.ink3}, late, '…');
+  const lx = XL + DXL / 2 + W / 2;
+  el('text', {x: lx, y: 58, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 600, fill: C.ink}, late, 'typical later requests');
+  el('text', {x: lx, y: 80, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink2}, late, '(measured growth');
+  el('text', {x: lx, y: 98, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink2}, late, '1.8k per request)');
+  [[50, 141], [200, 414]].forEach(([k, ctx], j) => {
+    const x = XL + j * DXL;
+    el('text', {x: x + W / 2, y: BASE - 34, 'text-anchor': 'middle', 'font-size': 14, fill: C.ink2}, late, 'context');
+    el('text', {x: x + W / 2, y: BASE - 12, 'text-anchor': 'middle', 'font-size': 20, 'font-weight': 700, fill: C.cold, class: 'mono'}, late, ctx + 'k');
+    el('text', {x: x + W / 2, y: BASE + 24, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 600, fill: C.ink}, late, 'k = ' + k);
+    iteBar(x, ctx * 0.1, 1.8 * 2, 0.5 * 5, 4, true);
   });
   // annotations for request 1
   const a = el('g', {'data-step': 0}, svg);
@@ -911,8 +934,9 @@ function buildStack() {
   });
   const lab = el('g', {'data-step': 3}, svg);
   el('line', {x1: 180, y1: IBASE, x2: 1152, y2: IBASE, stroke: C.ink, 'stroke-width': 1.5}, lab);
-  el('text', {x: 0, y: IBASE - 34, 'font-size': 19, 'font-weight': 600, fill: C.ink}, lab, 'ITE of the request');
-  el('text', {x: 0, y: IBASE - 12, 'font-size': 16, fill: C.ink2}, lab, 'read part grows →');
+  el('text', {x: 0, y: IBASE - 56, 'font-size': 19, 'font-weight': 600, fill: C.ink}, lab, 'ITE of the request');
+  el('text', {x: 0, y: IBASE - 34, 'font-size': 15, fill: C.hot}, lab, 'early: writes dominate');
+  el('text', {x: 0, y: IBASE - 12, 'font-size': 15, fill: C.cold, 'font-weight': 600, 'data-step': 4}, svg, 'later: re-reads dominate');
 }
 
 /* ---------- slide 5: rent ---------- */
