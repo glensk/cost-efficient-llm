@@ -306,13 +306,13 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="rise" data-step="1">
-          <div class="ite">\(\text{ITE} = \text{in} + 1.25\,w_{5m} + 2\,w_{1h} + 0.1\,\text{read} + 5\,\text{out}\)</div>
+          <div class="ite">\(\text{ITE} = \text{in} + \textcolor{#9A7B10}{1.25\,w_{5m}} + \textcolor{#B8511A}{2\,w_{1h}} + \textcolor{#28688E}{0.1\,\text{read}} + \textcolor{#A02C7C}{5\,\text{out}}\)</div>
           <p class="symleg"><b>ITE</b> = input-token equivalents: how many fresh input tokens cost the same. \(w_{5m}, w_{1h}\) = tokens written to the 5-minute / 1-hour cache. \(\text{in}\) = input that is not cached, close to 0 in Claude Code.</p>
         </div>
         <div class="card ex rise" data-step="2">
           <h3>One request at 150k context <span class="tag ill">illustrative split</span></h3>
           <div class="row"><span>148k re-read &times; 0.1</span><b>14.8k</b></div>
-          <div class="row"><span>2k new since the last request, written &times; 2</span><b>4.0k</b></div>
+          <div class="row" style="align-items:baseline;flex-wrap:wrap"><span>2k new, written &times; 2</span><b>4.0k</b><small style="flex-basis:100%;font-size:15px;color:var(--ink3);line-height:1.25">(the model's last reply, the tool results and your prompt)</small></div>
           <div class="row"><span>1k answer &times; 5</span><b>5.0k</b></div>
           <div class="row tot"><span>this request</span><b>23.8k ITE</b></div>
         </div>
