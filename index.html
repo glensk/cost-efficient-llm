@@ -484,7 +484,7 @@
     <p class="eyebrow"><span class="tno">3</span><svg class="ic"><use href="#i3"/></svg><b>stay warm, never resume cold</b></p>
     <h2>Answer ten minutes later, <em>pay 20&times;</em>.</h2>
   </header>
-  <div class="body" style="gap:24px">
+  <div class="body" style="gap:12px">
     <svg viewBox="0 0 1152 300" width="1152" height="300" role="img" aria-label="Timeline: the cache stays warm for one hour after the last request. A reply at 55 minutes reads 150k at 0.1x, 15k ITE; at 65 minutes it writes 150k at 2x, 300k ITE; a fresh session costs about 30k.">
       <g data-step="0">
         <rect x="150" y="20" width="768" height="46" fill="#F0DDCE"/>
@@ -523,13 +523,14 @@
       <li>Batch follow-ups inside the hour</li>
       <li>After a long break: a fresh session from a note, not <code>--resume</code></li>
       <li>Mid-session, do not change MCP tools, effort or thinking</li>
-      <li style="grid-column:1/-1">Waiting on a long job (training, build, subagent)? A keep-warm timer pings before the hour ends: ~15k ITE, not 300k.</li>
+      <li style="grid-column:1/-1">Waiting on a long job, or back later today? A keep-warm timer pings before each hour ends: ~15k ITE per ping.</li>
+      <li style="grid-column:1/-1">A cold resume (300k) = 20 pings = ~16 h: a session you still need is cheaper kept warm all day. If a short note is enough, start fresh instead (30k = 2 pings).</li>
     </ul>
   </div>
   <p class="home"><span>After an hour away, a fresh session from a short note beats <code>--resume</code> by 10&times;.</span></p>
   <aside class="notes">
-    <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k. Waiting on a long job, a keep-warm timer fires before the hour is up (mine 50 minutes after the last request, only while the cache is still warm) and wakes the session for one tiny request, about 15k at 150k context, which renews the hour; it only pays off if you will come back to that session.</p>
-    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Keep-warm timer: mydotfiles dotfiles/claude/.claude/hooks/cc-keepwarm.sh (armed by keep-warm-guard.py; fires at newest API call + 3000 s, below the 1-hour TTL, only while a wake is still needed and the cache is warm); ping 150k &times; 0.1 = 15k vs cold 150k &times; 2 = 300k. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
+    <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k. Waiting on a long job, a keep-warm timer fires before the hour is up (mine 50 minutes after the last request, only while the cache is still warm) and wakes the session for one tiny request, about 15k at 150k context, which renews the hour; it only pays off if you will come back to that session. One cold resume costs as much as 20 pings, about 16 hours of pings every 50 minutes, so a session whose full context you still need is cheaper kept warm through the whole working day (8 hours is about 10 pings, half a cold resume); if a short note is enough, start fresh after about 2 hours instead, 30k is the price of 2 pings.</p>
+    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Keep-warm timer: mydotfiles dotfiles/claude/.claude/hooks/cc-keepwarm.sh (armed by keep-warm-guard.py; fires at newest API call + 3000 s, below the 1-hour TTL, only while a wake is still needed and the cache is warm); ping 150k &times; 0.1 = 15k vs cold 150k &times; 2 = 300k. Break-even: 300k / 15k = 20 pings; 20 &times; 50 min = 1,000 min, about 16.7 h; 8 h is about 10 pings = 150k; fresh session 30k / 15k = 2 pings. The comparison ignores that the 5-minute subagent caches are not kept. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
   </aside>
 </section>
 
