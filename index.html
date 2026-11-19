@@ -143,7 +143,7 @@
   .ex .row b{font-family:var(--mono);font-weight:500}
   .ex .tot{font-weight:600;color:var(--ink);border-bottom:0}
 
-  /* 7 overview */
+  /* 6 overview */
   .grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .tile{background:var(--card);border:1px solid var(--rule);padding:14px 16px;display:grid;grid-template-columns:42px 1fr 40px;gap:4px 14px;align-items:center;align-content:center;min-height:86px;box-sizing:border-box;position:relative;overflow:hidden}
   .tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--hot)}
@@ -155,7 +155,7 @@
   .tile.fin .t{color:#fff}
   .tile.fin .v{color:#C7D0D8}
 
-  /* 8 start lean + stable first */
+  /* 7 start lean + stable first */
   .tbar{display:flex;align-items:stretch;border:2px solid var(--ink);background:var(--card);height:96px;position:relative}
   .tbar>div{min-width:0;box-sizing:border-box;padding:6px 12px;border-right:1px solid var(--ink);overflow:hidden}
   .tbar>div:last-child{border-right:0}
@@ -180,29 +180,29 @@
   .cp{box-shadow:inset -6px 0 0 var(--green)}
   .tbar span.cpin{position:absolute;top:-24px;transform:translateX(-100%);font-family:var(--mono);font-size:14px;color:var(--green);white-space:nowrap}
   .tbar span.wnote{position:absolute;top:-24px;right:0;font-family:var(--mono);font-size:14px;color:var(--hot)}
-  #s8 .how{font-size:16.5px;line-height:1.35}
-  #s8 .how code{font-size:.84em}
-  #s8 .kick{margin-bottom:6px}
-  #s8 .hlrow{display:flex;align-items:center;gap:12px}
-  #s8 .hlrow b{font-family:var(--cond);font-size:28px;color:var(--ink)}
-  #s8 .hlrow span{font-family:var(--mono);font-size:14px;color:var(--ink3)}
-  #s8 .sm{font-size:15.5px;line-height:1.35;margin-top:5px}
-  #s8 .card{padding:10px 18px 4px}
-  #s8 .card h3{margin-bottom:6px}
-  #s8 .acts li{font-size:16px;line-height:1.28;margin-bottom:4px}
-  #s8 .acts li::before{top:3px}
-  #s8 .acts li::after{top:6px}
+  #s7 .how{font-size:16.5px;line-height:1.35}
+  #s7 .how code{font-size:.84em}
+  #s7 .kick{margin-bottom:6px}
+  #s7 .hlrow{display:flex;align-items:center;gap:12px}
+  #s7 .hlrow b{font-family:var(--cond);font-size:28px;color:var(--ink)}
+  #s7 .hlrow span{font-family:var(--mono);font-size:14px;color:var(--ink3)}
+  #s7 .sm{font-size:15.5px;line-height:1.35;margin-top:5px}
+  #s7 .card{padding:10px 18px 4px}
+  #s7 .card h3{margin-bottom:6px}
+  #s7 .acts li{font-size:16px;line-height:1.28;margin-bottom:4px}
+  #s7 .acts li::before{top:3px}
+  #s7 .acts li::after{top:6px}
 
-  /* 11 feed sparingly */
-  #s11 li{font-size:23px;margin-bottom:14px}
-  #s11 .card{padding:26px 32px 14px}
-  #s11 h3{font-size:16px;margin-bottom:16px}
-  #s11 .acts li{padding-left:34px}
-  #s11 .acts li::before{top:9px;width:20px;height:20px}
-  #s11 .acts li::after{top:13px;left:7px}
-  #s11 .ok .acts li::before{background:var(--green)}
+  /* 10 feed sparingly */
+  #s10 li{font-size:23px;margin-bottom:14px}
+  #s10 .card{padding:26px 32px 14px}
+  #s10 h3{font-size:16px;margin-bottom:16px}
+  #s10 .acts li{padding-left:34px}
+  #s10 .acts li::before{top:9px;width:20px;height:20px}
+  #s10 .acts li::after{top:13px;left:7px}
+  #s10 .ok .acts li::before{background:var(--green)}
 
-  /* 17 finale */
+  /* 16 finale */
   .slide.dark{background:radial-gradient(120% 90% at 50% 20%,#1C2730 0%,#0E1418 70%);color:#E9EDF0}
   .slide.dark h2{color:#fff}
   .slide.dark .eyebrow{color:#8D9AA6}
@@ -215,7 +215,7 @@
   @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
   .ball{offset-rotate:0deg}
 
-  /* 16 remember */
+  /* 15 remember */
   .three{display:flex;flex-direction:column;gap:6px}
   .three div{font-family:var(--cond);font-weight:700;font-size:84px;line-height:1.02;letter-spacing:-.02em}
   .three div i{font-style:normal;font-family:var(--mono);font-size:22px;color:var(--ink3);font-weight:500;display:inline-block;width:66px}
@@ -255,7 +255,7 @@
   <p class="prev">Previous talk: <a href="https://glensk.github.io/coding-agents-talk/">glensk.github.io/coding-agents-talk</a></p>
   <aside class="notes">
     <p>Say: You mostly use Claude Code as a chat in the terminal. Today: why the same work can cost 1&times; or 5&times;, and nine habits that keep it at 1&times;. Most of you are on a flat seat, so "cost" means how fast you hit the usage limit: the arithmetic is the same.</p>
-    <p>Sources: 97% = cache-read share of all tokens, decide relay-cost API, 1,765 sessions since 2026-10-20 (scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich). 20&times; = 300k vs 15k ITE for a 150k context (slide 9). 4.4&times; = model of slide 6 (c_0 50k, g 1.82k, to 1M context, relay at 150k, fee 120k): 27.4M vs 6.2M ITE; re-reads and relay fees only.</p>
+    <p>Sources: 97% = cache-read share of all tokens, decide relay-cost API, 1,765 sessions since 2026-10-20 (scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich). 20&times; = 300k vs 15k ITE for a 150k context (slide 8). 4.4&times; = model of slide 5 (c_0 50k, g 1.82k, to 1M context, relay at 150k, fee 120k): 27.4M vs 6.2M ITE; re-reads and relay fees only.</p>
   </aside>
 </section>
 
@@ -353,36 +353,14 @@
   <p class="home">You type 1 prompt, the agent makes ~25 requests, and each re-reads everything before it.</p>
   <aside class="notes">
     <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows. In the first requests the write of new tokens dominates; by request 50 the re-read is the largest part, and by 200 it is almost everything.</p>
-    <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm. The two later bars (k = 50, 200) follow the slide-6 model: c_k = 50k + 1.82k k (141k, 414k), 1.8k new (written 2&times;) and 0.5k output (5&times;) per request; mean output per request in the 30-day data is 0.53k. k = 50: read 14.1k + write 3.6k + output 2.5k = 20.2k; k = 200: 41.4k + 3.6k + 2.5k = 47.5k.</p>
+    <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm. The two later bars (k = 50, 200) follow the slide-5 model: c_k = 50k + 1.82k k (141k, 414k), 1.8k new (written 2&times;) and 0.5k output (5&times;) per request; mean output per request in the 30-day data is 0.53k. k = 50: read 14.1k + write 3.6k + output 2.5k = 20.2k; k = 200: 41.4k + 3.6k + 2.5k = 47.5k.</p>
   </aside>
 </section>
 
-<!-- ================= 5 EVERY TOKEN PAYS RENT ================= -->
+<!-- ================= 5 QUADRATIC ================= -->
 <section class="slide" id="s5">
   <header>
-    <p class="eyebrow">05 &middot; <b>every token pays rent</b></p>
-    <h2>A token is written once, then <em>paid again on every request</em>.</h2>
-  </header>
-  <div class="body">
-    <div class="legend" style="font-size:17px;gap:8px 18px" data-step="0">
-      <span style="color:var(--ink)">tool call: <b style="color:var(--out)">output 5&times;</b></span><span>&rarr;</span>
-      <span style="color:var(--ink)">tool result: <b style="color:var(--hot)">written once 2&times;</b></span><span>&rarr;</span>
-      <span style="color:var(--ink)">then <b style="color:var(--cold)">0.1&times; on every later request</b></span>
-      <span style="margin-left:auto;color:var(--ink)">cost per token \(= 2 + 0.1 \times\) requests still to come</span>
-    </div>
-    <svg id="rentfig" viewBox="0 0 1152 360" width="1152" height="360" role="img" aria-label="Cumulative cost of one 10k-token tool result: 20k to write, then 1k per later request, 120k after 100 requests; a taxi meter shows the running total."></svg>
-  </div>
-  <p class="home">A 10k file read at request 1 of 100 costs 120k ITE, 12&times; its size; read 10 requests before the end, 30k. Early is expensive.</p>
-  <aside class="notes">
-    <p>Say: The tool call the model writes is output, 5&times;. The tool result, say a 10k file, is written into the cache once at 2&times;: 20k. From then on every request re-reads it at 0.1&times;: 1k each. After 20 requests the rent has cost as much as the write; after 100 it is 120k, six times the write. The same file read 10 requests before the end costs 20k + 10k = 30k.</p>
-    <p>Arithmetic from the price ladder (slide 3), main session (1-hour cache). The 10k / 100 requests example is illustrative; a median interactive session has 53 requests (decide API), long ones several hundred. Per token: 2 + 0.1 &times; later requests; at request 1 of 100: 2 + 10 = 12, 10k &rarr; 120k ITE (12&times; its size); 10 requests before the end: 2 + 1 = 3, 10k &rarr; 30k ITE.</p>
-  </aside>
-</section>
-
-<!-- ================= 6 QUADRATIC ================= -->
-<section class="slide" id="s6">
-  <header>
-    <p class="eyebrow">06 &middot; <b>why long sessions explode</b> &middot; <span class="tag">model: re-reads and relay fees only</span></p>
+    <p class="eyebrow">05 &middot; <b>why long sessions explode</b> &middot; <span class="tag">model: re-reads and relay fees only</span></p>
     <h2>Each request costs a little more. <em>The session total grows in a parabola.</em></h2>
   </header>
   <div class="body" style="gap:6px">
@@ -395,10 +373,10 @@
   </aside>
 </section>
 
-<!-- ================= 7 OVERVIEW ================= -->
-<section class="slide" id="s7">
+<!-- ================= 6 OVERVIEW ================= -->
+<section class="slide" id="s6">
   <header>
-    <p class="eyebrow">07 &middot; <b>the map</b> &middot; nine habits</p>
+    <p class="eyebrow">06 &middot; <b>the map</b> &middot; nine habits</p>
     <h2>Nine habits. <em>Each one with its number.</em></h2>
   </header>
   <div class="body">
@@ -416,13 +394,13 @@
   </div>
   <p class="home">Two levers behind all nine: carry less context, and keep the cache warm.</p>
   <aside class="notes">
-    <p>Say: Here is the map. 1-5 are about what goes into the context and when; 6-7 about splitting work across sessions; 8 about the price per token; 9, the finale, about not doing work at all. On the 10-minute path skip habits 4 and 8, and say habit 2 in one sentence (it shares slide 8 with habit 1).</p>
-    <p>Numbers are from the slides that follow (each tile number = the slide's badge; habits 1 and 2 share slide 8): 72k model and &minus;40% measured (slide 8), 20&times; (9), 4k vs 15k (10), 120k (5/11), 9k vs 41k measured (12), fee 120k / 14 requests (13), Haiku $0.10 vs Opus $4 per M input (15).</p>
+    <p>Say: Here is the map. 1-5 are about what goes into the context and when; 6-7 about splitting work across sessions; 8 about the price per token; 9, the finale, about not doing work at all. On the 10-minute path skip habits 4 and 8, and say habit 2 in one sentence (it shares slide 7 with habit 1).</p>
+    <p>Numbers are from the slides that follow (each tile number = the slide's badge; habits 1 and 2 share slide 7): 72k model and &minus;40% measured (slide 7), 20&times; (8), 4k vs 15k (9), 120k (10; derivation on backup slide 17), 9k vs 41k measured (11), fee 120k / 14 requests (12), Haiku $0.10 vs Opus $4 per M input (14).</p>
   </aside>
 </section>
 
-<!-- ================= 8 START LEAN + STABLE FIRST ================= -->
-<section class="slide" id="s8">
+<!-- ================= 7 START LEAN + STABLE FIRST ================= -->
+<section class="slide" id="s7">
   <header>
     <p class="eyebrow"><span class="tno">1</span><svg class="ic"><use href="#i1"/></svg><b>start lean</b> &middot; <span class="tno">2</span><svg class="ic"><use href="#i2"/></svg><b>stable first, variable last</b></p>
     <h2>Every session starts with <em>~32k tokens</em> before you say a word.</h2>
@@ -478,8 +456,8 @@
   </aside>
 </section>
 
-<!-- ================= 9 STAY WARM ================= -->
-<section class="slide" id="s9">
+<!-- ================= 8 STAY WARM ================= -->
+<section class="slide" id="s8">
   <header>
     <p class="eyebrow"><span class="tno">3</span><svg class="ic"><use href="#i3"/></svg><b>stay warm, never resume cold</b></p>
     <h2>Answer ten minutes later, <em>pay 20&times;</em>.</h2>
@@ -519,7 +497,7 @@
         <text x="312" y="287" font-size="22" font-weight="700" fill="#0A8A72" class="cond">~30k ITE: start fresh from a short note</text>
       </g>
     </svg>
-    <ul class="acts rise" data-step="2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+    <ul class="acts rise" data-step="2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 14px">
       <li>Batch follow-ups inside the hour</li>
       <li>After a long break: a fresh session from a note, not <code>--resume</code></li>
       <li>Mid-session, do not change MCP tools, effort or thinking</li>
@@ -530,12 +508,12 @@
   <p class="home"><span>After an hour away, a fresh session from a short note beats <code>--resume</code> by 10&times;.</span></p>
   <aside class="notes">
     <p>Say: The cache lives one hour in a main session, five minutes in a subagent, and every request renews it. Reply at 55 minutes: 150k are re-read at 0.1&times;, 15k. Reply at 65 minutes: all 150k are written again at 2&times;, 300k, before the model reads your new sentence. A fresh session with a short note costs about 30k. Waiting on a long job, a keep-warm timer fires before the hour is up (mine 50 minutes after the last request, only while the cache is still warm) and wakes the session for one tiny request, about 15k at 150k context, which renews the hour; it only pays off if you will come back to that session. One cold resume costs as much as 20 pings, about 16 hours of pings every 50 minutes, so a session whose full context you still need is cheaper kept warm through the whole working day (8 hours is about 10 pings, half a cold resume); if a short note is enough, start fresh after about 2 hours instead, 30k is the price of 2 pings.</p>
-    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 8). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Keep-warm timer: mydotfiles dotfiles/claude/.claude/hooks/cc-keepwarm.sh (armed by keep-warm-guard.py; fires at newest API call + 3000 s, below the 1-hour TTL, only while a wake is still needed and the cache is warm); ping 150k &times; 0.1 = 15k vs cold 150k &times; 2 = 300k. Break-even: 300k / 15k = 20 pings; 20 &times; 50 min = 1,000 min, about 16.7 h; 8 h is about 10 pings = 150k; fresh session 30k / 15k = 2 pings. The comparison ignores that the 5-minute subagent caches are not kept. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
+    <p>Sources: TTLs and prices: Anthropic prompt-caching docs; 1-hour main / 5-minute subagent: transcript check 2026-11-10. 30k = measured warm session start 30.1k (slide 7). The docs list changes to tool definitions, thinking and effort settings as cache invalidators; a model switch is not listed there, so it is left out. Editing CLAUDE.md makes the NEXT session write it again. Keep-warm timer: mydotfiles dotfiles/claude/.claude/hooks/cc-keepwarm.sh (armed by keep-warm-guard.py; fires at newest API call + 3000 s, below the 1-hour TTL, only while a wake is still needed and the cache is warm); ping 150k &times; 0.1 = 15k vs cold 150k &times; 2 = 300k. Break-even: 300k / 15k = 20 pings; 20 &times; 50 min = 1,000 min, about 16.7 h; 8 h is about 10 pings = 150k; fresh session 30k / 15k = 2 pings. The comparison ignores that the 5-minute subagent caches are not kept. Refresh of the 2026-08 talk slide 2 (which showed $0.08 vs $1.50 on Opus 4.6).</p>
   </aside>
 </section>
 
-<!-- ================= 10 ONE TASK ONE SESSION ================= -->
-<section class="slide" id="s10">
+<!-- ================= 9 ONE TASK ONE SESSION ================= -->
+<section class="slide" id="s9">
   <header>
     <p class="eyebrow"><span class="tno">4</span><svg class="ic"><use href="#i4"/></svg><b>one task, one session</b></p>
     <h2>A new topic in an old session <em>pays rent on the old one</em>.</h2>
@@ -580,8 +558,8 @@
   </aside>
 </section>
 
-<!-- ================= 11 FEED SPARINGLY ================= -->
-<section class="slide" id="s11">
+<!-- ================= 10 FEED SPARINGLY ================= -->
+<section class="slide" id="s10">
   <header>
     <p class="eyebrow"><span class="tno">5</span><svg class="ic"><use href="#i5"/></svg><b>feed the context sparingly</b></p>
     <h2>What enters the context <em>stays and pays rent</em>.</h2>
@@ -612,13 +590,13 @@
   </div>
   <p class="home">Every 10k you let in early costs ~120k ITE by the end, 12&times; its size: print little, read narrowly.</p>
   <aside class="notes">
-    <p>Say: Slide 5 in practice. Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. Ask the agent to look at line ranges, heads, tails, and to answer with diffs.</p>
-    <p>120k = 10k &times; (2 + 0.1 &times; 100 later requests), slide 5, illustrative. For notebooks: nbstripout or <code>jupyter nbconvert --clear-output</code> before the agent reads them.</p>
+    <p>Say: A token is written once at 2&times; and then re-read at 0.1&times; on every later request (backup slide 17). Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. Ask the agent to look at line ranges, heads, tails, and to answer with diffs.</p>
+    <p>120k = 10k &times; (2 + 0.1 &times; 100 later requests), backup slide 17, illustrative. For notebooks: nbstripout or <code>jupyter nbconvert --clear-output</code> before the agent reads them.</p>
   </aside>
 </section>
 
-<!-- ================= 12 SUBAGENTS ================= -->
-<section class="slide" id="s12">
+<!-- ================= 11 SUBAGENTS ================= -->
+<section class="slide" id="s11">
   <header>
     <p class="eyebrow"><span class="tno">6</span><svg class="ic"><use href="#i6"/></svg><b>delegate to subagents</b> &middot; lean and BIG</p>
     <h2>Let a helper do the reading. <em>Keep only its report.</em></h2>
@@ -664,8 +642,8 @@
   </aside>
 </section>
 
-<!-- ================= 13 RELAY ================= -->
-<section class="slide" id="s13">
+<!-- ================= 12 RELAY ================= -->
+<section class="slide" id="s12">
   <header>
     <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>relay</b> &middot; hand over the baton</p>
     <h2>Write a note, <em>start fresh</em>, keep going.</h2>
@@ -718,8 +696,8 @@
   </aside>
 </section>
 
-<!-- ================= 14 WHEN TO RELAY ================= -->
-<section class="slide" id="s14">
+<!-- ================= 13 WHEN TO RELAY ================= -->
+<section class="slide" id="s13">
   <header>
     <p class="eyebrow"><span class="tno">7</span><svg class="ic"><use href="#i7"/></svg><b>when to relay</b> &middot; <span class="tag">model, fast-path fee r = 120k</span></p>
     <h2>Too early is worst. <em>A bit late is cheap.</em></h2>
@@ -734,8 +712,8 @@
   </aside>
 </section>
 
-<!-- ================= 15 RIGHT MODEL ================= -->
-<section class="slide" id="s15">
+<!-- ================= 14 RIGHT MODEL ================= -->
+<section class="slide" id="s14">
   <header>
     <p class="eyebrow"><span class="tno">8</span><svg class="ic"><use href="#i8"/></svg><b>right model, right effort</b> &middot; list price per million tokens</p>
     <h2>The same token costs <em>40&times; less</em> on a small model.</h2>
@@ -767,10 +745,10 @@
   </aside>
 </section>
 
-<!-- ================= 16 REMEMBER ================= -->
-<section class="slide" id="s16">
+<!-- ================= 15 REMEMBER ================= -->
+<section class="slide" id="s15">
   <header>
-    <p class="eyebrow">16 &middot; <b>one slide to remember</b></p>
+    <p class="eyebrow">15 &middot; <b>one slide to remember</b></p>
   </header>
   <div class="body">
     <div class="three">
@@ -783,12 +761,12 @@
   <p class="home">Small context, warm cache, timely relay: same work, a fraction of the limit.</p>
   <aside class="notes">
     <p>Say: If you remember three things: keep the context small (start lean, read narrowly, delegate), keep the cache warm (reply within the hour, start fresh after a break), and hand over at about 150k. And today: run /context once.</p>
-    <p>No new numbers; 150k = our relay floor (cc_relay.py) and the upper edge of the model's flat band (slide 14).</p>
+    <p>No new numbers; 150k = our relay floor (cc_relay.py) and the upper edge of the model's flat band (slide 13).</p>
   </aside>
 </section>
 
-<!-- ================= 17 CODEX DEBATE ================= -->
-<section class="slide dark" id="s17">
+<!-- ================= 16 CODEX DEBATE ================= -->
+<section class="slide dark" id="s16">
   <header>
     <p class="eyebrow"><span class="tno">9</span><svg class="ic" style="color:#F3B48C"><use href="#i9"/></svg><b style="color:#F3B48C">attack the plan before you build</b> &middot; the Codex debate</p>
     <h2>The cheapest token is the one <em>for work you never do</em>.</h2>
@@ -807,12 +785,34 @@
   </aside>
 </section>
 
+<!-- ================= 17 BACKUP: EVERY TOKEN PAYS RENT ================= -->
+<section class="slide backup" id="s17">
+  <header>
+    <p class="eyebrow"><span class="tag ill">backup</span> &middot; <b>every token pays rent</b></p>
+    <h2>A token is written once, then <em>paid again on every request</em>.</h2>
+  </header>
+  <div class="body">
+    <div class="legend" style="font-size:17px;gap:8px 18px" data-step="0">
+      <span style="color:var(--ink)">tool call: <b style="color:var(--out)">output 5&times;</b></span><span>&rarr;</span>
+      <span style="color:var(--ink)">tool result: <b style="color:var(--hot)">written once 2&times;</b></span><span>&rarr;</span>
+      <span style="color:var(--ink)">then <b style="color:var(--cold)">0.1&times; on every later request</b></span>
+      <span style="margin-left:auto;color:var(--ink)">cost per token \(= 2 + 0.1 \times\) requests still to come</span>
+    </div>
+    <svg id="rentfig" viewBox="0 0 1152 360" width="1152" height="360" role="img" aria-label="Cumulative cost of one 10k-token tool result: 20k to write, then 1k per later request, 120k after 100 requests; a taxi meter shows the running total."></svg>
+  </div>
+  <p class="home">A 10k file read at request 1 of 100 costs 120k ITE, 12&times; its size; read 10 requests before the end, 30k. Early is expensive.</p>
+  <aside class="notes">
+    <p>Say: The tool call the model writes is output, 5&times;. The tool result, say a 10k file, is written into the cache once at 2&times;: 20k. From then on every request re-reads it at 0.1&times;: 1k each. After 20 requests the rent has cost as much as the write; after 100 it is 120k, six times the write. The same file read 10 requests before the end costs 20k + 10k = 30k.</p>
+    <p>Arithmetic from the price ladder (slide 3), main session (1-hour cache). The 10k / 100 requests example is illustrative; a median interactive session has 53 requests (decide API), long ones several hundred. Per token: 2 + 0.1 &times; later requests; at request 1 of 100: 2 + 10 = 12, 10k &rarr; 120k ITE (12&times; its size); 10 requests before the end: 2 + 1 = 3, 10k &rarr; 30k ITE.</p>
+  </aside>
+</section>
+
 </div>
 <div class="ruler">
   <span>COST-EFFICIENT LLM USE</span>
   <div class="track"><div class="span" id="span"></div></div>
   <span class="dots" id="dots"></span>
-  <span class="count" id="count">1 / 17</span>
+  <span class="count" id="count">1 / 16</span>
   <span class="hint">&larr; &rarr; &middot; A all &middot; N notes</span>
 </div>
 </div>
@@ -937,7 +937,7 @@ function buildStack() {
   el('text', {x: 0, y: IBASE - 12, 'font-size': 15, fill: C.cold, 'font-weight': 600, 'data-step': 4}, svg, 'later: re-reads dominate');
 }
 
-/* ---------- slide 5: rent ---------- */
+/* ---------- slide 17 (backup): rent ---------- */
 function buildRent() {
   const svg = document.getElementById('rentfig');
   const x0 = 90, x1 = 760, y0 = 316, y1 = 20, N = 100, YM = 130;
@@ -975,7 +975,7 @@ function buildRent() {
   el('circle', {cx: 160, cy: 230, r: 6, fill: '#F2C230', class: 'spark'}, m);
 }
 
-/* ---------- slide 6: quadratic ---------- */
+/* ---------- slide 5: quadratic ---------- */
 function buildQuad() {
   const svg = document.getElementById('quadfig');
   const c0 = 50e3, g = 1820, r = 120e3, F = 150e3, K = 522;
@@ -1064,7 +1064,7 @@ function buildQuad() {
   el('text', {x: RX(190), y: RY(15e6) + 28, 'text-anchor': 'middle', 'font-size': 18, fill: C.ink2}, s3, 'cheaper with relays');
 }
 
-/* ---------- slide 14: U-curve ---------- */
+/* ---------- slide 13: U-curve ---------- */
 function buildU() {
   const svg = document.getElementById('ufig');
   const c0 = 50e3, g = 1820, r = 120e3, YM = 50e3;
@@ -1135,7 +1135,7 @@ function buildU() {
   el('text', {x: 266, y: 118, 'font-size': 17, fill: C.ink2}, co, 'share it. Real replays: never relaying = +37–42%.');
 }
 
-/* ---------- slide 17: duel ---------- */
+/* ---------- slide 16: duel ---------- */
 function buildDuel() {
   const svg = document.getElementById('duelfig');
   const fencer = (x, dir, col, name, sub, st) => {
@@ -1175,6 +1175,7 @@ function buildDuel() {
 
 /* ---------- engine ---------- */
 const slides = Array.from(document.querySelectorAll('.slide'));
+const nMain = slides.filter(s => !s.classList.contains('backup')).length;  // backup slides follow the main run
 const stage = document.querySelector('.stage');
 const spanEl = document.getElementById('span'), countEl = document.getElementById('count'), dotsEl = document.getElementById('dots');
 let cur = 0, step = 0;
@@ -1219,8 +1220,8 @@ function render(fromNav) {
   }
   const m = maxStep(s);
   dotsEl.innerHTML = m ? Array.from({length: m + 1}, (_, j) => '<i class="' + (j <= step ? 'on' : '') + '"></i>').join('') : '';
-  spanEl.style.width = ((cur + 1) / slides.length * 100) + '%';
-  countEl.textContent = (cur + 1) + ' / ' + slides.length;
+  spanEl.style.width = (Math.min(cur + 1, nMain) / nMain * 100) + '%';
+  countEl.textContent = cur < nMain ? (cur + 1) + ' / ' + nMain : 'backup';
   const h = '#' + (cur + 1) + (step ? '.' + step : '');
   if (location.hash !== h) history.replaceState(null, '', h);
 }
