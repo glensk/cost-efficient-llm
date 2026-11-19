@@ -124,17 +124,13 @@
   .prev a{color:var(--cold)}
 
   /* 2 tokens */
-  .tiles3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
-  .tiles3 div{background:var(--card);border:1px solid var(--rule);border-top:4px solid var(--cold);padding:12px 18px}
-  .tiles3 b{display:block;font-family:var(--cond);font-size:46px;line-height:1.05;color:var(--ink)}
-  .tiles3 span{display:block;font-size:18px;color:var(--ink2);margin-top:2px}
 
   /* 3 ladder */
   .ladder{display:flex;align-items:flex-end;gap:22px;height:330px;position:relative;padding:0 6px;border-bottom:2px solid var(--ink)}
   .ladder .rung{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
   .ladder .bar{width:100%;transform-origin:50% 100%}
   .ladder .mul{font-family:var(--cond);font-weight:700;font-size:54px;line-height:1;margin-bottom:6px}
-  .ladder .lab{font-size:18px;color:var(--ink2);text-align:center;line-height:1.25;position:absolute;bottom:-56px;width:150px}
+  .ladder .lab{font-size:18px;color:var(--ink2);text-align:center;line-height:1.25;position:absolute;top:calc(100% + 10px);width:150px}
   .ladder .rung{position:relative}
   .yard{position:absolute;left:0;right:0;border-top:2px dashed rgba(19,26,32,.55);z-index:2}
   .ladder .mul{position:relative;z-index:3;background:var(--paper);padding:0 6px}
@@ -259,10 +255,10 @@
 <section class="slide" id="s2">
   <header>
     <p class="eyebrow">02 &middot; <b>where the tokens go</b> &middot; our last 30 days</p>
-    <h2>97% of the tokens are <em>re-reads</em>. They are 58% of the bill.</h2>
+    <h2>97% of the tokens are <em>re-reads</em>. They are 48% of the bill.</h2>
   </header>
   <div class="body">
-    <svg viewBox="0 0 1152 250" width="1152" height="250" role="img" aria-label="Two stacked bars: share of tokens and share of the bill per token kind.">
+    <svg viewBox="0 0 1152 268" width="1152" height="268" role="img" aria-label="Two stacked bars: share of tokens (97% cache read) and share of the bill at list price (48% cache read, 36% cache write, 16% output).">
       <g data-step="0">
         <text x="0" y="22" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">SHARE OF TOKENS</text>
         <rect class="growx" x="1" y="34" width="1116" height="64" fill="#D4E3EC" stroke="#28688E" stroke-width="2"/>
@@ -272,25 +268,21 @@
         <text x="1116" y="122" font-size="17" fill="#4E5A66" text-anchor="end">write 2.6% &#183; output 0.4% &#8599;</text>
       </g>
       <g data-step="1">
-        <text x="0" y="158" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">SHARE OF THE BILL (ITE)</text>
-        <rect class="growx" x="1" y="170" width="666" height="64" fill="#D4E3EC" stroke="#28688E" stroke-width="2"/>
-        <rect class="growx" x="669" y="170" width="356" height="64" fill="#B8511A"/>
-        <rect class="growx" x="1027" y="170" width="125" height="64" fill="#A02C7C"/>
-        <text x="20" y="212" font-size="26" font-weight="600" fill="#28688E">cache read 58%</text>
-        <text x="689" y="212" font-size="26" font-weight="600" fill="#fff">cache write 31%</text>
-        <text x="1089" y="212" font-size="24" font-weight="600" fill="#fff" text-anchor="middle">out 11%</text>
+        <text x="0" y="158" class="mono" font-size="15" fill="#7E8A96" letter-spacing="2">SHARE OF THE BILL (LIST PRICE)</text>
+        <rect class="growx" x="1" y="170" width="547" height="64" fill="#D4E3EC" stroke="#28688E" stroke-width="2"/>
+        <rect class="growx" x="550" y="170" width="414" height="64" fill="#B8511A"/>
+        <rect class="growx" x="966" y="170" width="186" height="64" fill="#A02C7C"/>
+        <text x="20" y="212" font-size="26" font-weight="600" fill="#28688E">cache read 48%</text>
+        <text x="570" y="212" font-size="26" font-weight="600" fill="#fff">cache write 36%</text>
+        <text x="1059" y="212" font-size="24" font-weight="600" fill="#fff" text-anchor="middle">output 16%</text>
+        <text x="1152" y="258" font-size="17" fill="#4E5A66" text-anchor="end">answers, thinking, tool calls</text>
       </g>
     </svg>
-    <div class="tiles3 rise" data-step="2">
-      <div><b data-count="61977" data-fmt="int">61,977</b><span>requests in 1,765 sessions</span></div>
-      <div><b>8.5 billion</b><span>tokens re-read from the cache</span></div>
-      <div><b>~$5,400</b><span>at list price; you pay it in usage limit</span></div>
-    </div>
   </div>
-  <p class="home">The traffic is re-reads. What you control: what you write into the context, and when the cache expires.</p>
+  <p class="home">Half the bill is re-reading the context on every request. Keep the context small and the cache warm.</p>
   <aside class="notes">
-    <p>Say: Almost every token is the model re-reading what it already saw. Re-reads are cheap per token, so by price they are about half. The rest is writing new things into the context, and output.</p>
-    <p>Source: decide relay-cost API, window 2026-10-20 13:17 to 2026-11-19, 1,765 sessions (all kinds: interactive, headless, jobs), 61,977 requests; cache read 8,538M, cache write 226M, output 33.1M, fresh input 0.14M tokens; list-price equivalent $5,401 (API field usd). Bill share in ITE with every write at 2&times; (the API does not split 5-min and 1-hour writes; with 1.25&times; the shares are 66 / 22 / 13%). scripts/relay_cost_stats.py, run 2026-11-19 12:17 Europe/Zurich. Refresh of the 2026-08 talk slide "96% of my tokens are re-read context".</p>
+    <p>Say: Almost every token is the model re-reading what it already saw. Re-reads are cheap per token, so by price they are about half; a third is writing new things into the context, the rest is output: answers, thinking and tool calls.</p>
+    <p>Source: decide relay-cost API, window 2026-10-20 13:17 to 2026-11-19 12:17 Europe/Zurich, 1,760 sessions, 61,807 requests; cache read 8,528M, cache write 226M, output 33.0M, fresh input 0.14M tokens. Main sessions only (subagents excluded). Bill shares at Anthropic list price per model (Opus 5.5 read $0.20 = 0.05&times; input; all cache writes at the 1-hour price, 2&times; input): read 48%, write 36%, output 16%, total $4,150 list price. scripts/relay_cost_stats.py, run 2026-11-19 22:31 Europe/Zurich. Refresh of the 2026-08 talk slide "96% of my tokens are re-read context".</p>
   </aside>
 </section>
 
@@ -306,8 +298,8 @@
         <div class="ladder" data-step="0">
           <div class="yard" style="bottom:56px"><span>1&times; input</span></div>
           <div class="rung"><div class="mul" style="color:var(--cold)">0.1&times;</div><div class="bar grow" style="height:6px;background:var(--cold)"></div><div class="lab">cache <b>read</b></div></div>
-          <div class="rung"><div class="mul" style="color:var(--gold)">1.25&times;</div><div class="bar grow" style="height:70px;background:var(--gold)"></div><div class="lab">cache write,<br>kept <b>5 min</b></div></div>
-          <div class="rung"><div class="mul" style="color:var(--hot)">2&times;</div><div class="bar grow" style="height:112px;background:var(--hot)"></div><div class="lab">cache write,<br>kept <b>1 hour</b></div></div>
+          <div class="rung"><div class="mul" style="color:var(--gold)">1.25&times;</div><div class="bar grow" style="height:70px;background:var(--gold)"></div><div class="lab">cache write,<br>kept <b>5 min</b><br>(subagents)</div></div>
+          <div class="rung"><div class="mul" style="color:var(--hot)">2&times;</div><div class="bar grow" style="height:112px;background:var(--hot)"></div><div class="lab">cache write,<br>kept <b>1 hour</b><br>(main session)</div></div>
           <div class="rung"><div class="mul" style="color:var(--out)">5&times;</div><div class="bar grow" style="height:270px;background:var(--out)"></div><div class="lab"><b>output</b><br>(the answer)</div></div>
         </div>
       </div>

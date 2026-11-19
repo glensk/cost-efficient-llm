@@ -3,12 +3,16 @@
 
 Reads the per-session rows of the decide relay-cost API (or a saved copy of
 its JSON) and prints: token totals, the share of tokens per kind, the share of
-the bill per kind (input-token equivalents, ITE, and list-price USD), requests
+the bill per kind (input-token equivalents, ITE, and list-price USD per model), requests
 per typed prompt for interactive sessions, and relay statistics.
 
 ITE = in + 2 write + 0.1 read + 5 out. The API does not split cache writes
 into 5-minute and 1-hour writes, so all writes are weighted with -w (default 2,
 the 1-hour price of a main session).
+
+The USD split prices every row with a per-model list-price table (PRICES, longest
+prefix match on the model id; cache write = 2x input, the 1-hour price); rows of an
+unknown model are counted as unpriced. The API field usd is not used for shares.
 
 Read-only: one HTTP GET (or one file read), output on stdout.
 """
@@ -33,6 +37,18 @@ LABELS = {
     "tok_cw": "cache write",
     "tok_cr": "cache read",
     "tok_out": "output",
+}
+
+
+# model id prefix -> (input, output, cache read) USD per million tokens
+PRICES: dict[str, tuple[float, float, float]] = {
+    "claude-opus-5-5": (4.0, 20.0, 0.20),
+    "claude-opus-5": (5.0, 25.0, 0.50),
+    "claude-sonnet-5-5": (2.0, 10.0, 0.10),
+    "claude-sonnet-5": (2.0, 10.0, 0.20),
+    "claude-haiku-5-5": (0.10, 0.50, 0.01),
+    "claude-haiku-4-5": (1.0, 5.0, 0.10),
+    "claude-fable-5-2": (8.0, 40.0, 0.20),
 }
 
 
@@ -104,24 +120,41 @@ def token_stats(rows: list[dict[str, Any]], w_write: float) -> dict[str, Any]:
     }
 
 
-def usd_shares(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """USD per kind, derivable only for rows of one model at Opus 5.5 list prices.
+def price_for(model: str) -> dict[str, float] | None:
+    """List prices (USD per million tokens) of a model id, longest prefix wins."""
+    best = max((m for m in PRICES if model.startswith(m)), key=len, default=None)
+    if best is None:
+        return None
+    inp, out, read = PRICES[best]
+    return {"tok_in": inp, "tok_cw": 2 * inp, "tok_cr": read, "tok_out": out}
 
-    The API gives one USD total per row, not per kind. For claude-opus-5-5 rows the
-    list prices are known ($4 in, $8 1-h write, $0.20 read, $20 out per million), so
-    the split is derived there and checked against the row totals.
+
+def usd_shares(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """List-price USD per kind over all rows, with a per-model price table.
+
+    Cache writes are priced at 2x input (1-hour cache of main sessions). Rows of a
+    model without a price are counted and reported as unpriced, not dropped silently.
     """
-    price = {"tok_in": 4.0, "tok_cw": 8.0, "tok_cr": 0.20, "tok_out": 20.0}
-    sel = [r for r in rows if r.get("model") == "claude-opus-5-5"]
-    usd = {k: sum(int(r.get(k) or 0) for r in sel) * price[k] / 1e6 for k in KINDS}
+    usd = dict.fromkeys(KINDS, 0.0)
+    unpriced: dict[str, int] = {}
+    priced = 0
+    for r in rows:
+        model = str(r.get("model") or "")
+        price = price_for(model)
+        if price is None:
+            unpriced[model] = unpriced.get(model, 0) + 1
+            continue
+        priced += 1
+        for k in KINDS:
+            usd[k] += int(r.get(k) or 0) * price[k] / 1e6
     tot = sum(usd.values())
     return {
-        "model": "claude-opus-5-5",
-        "sessions": len(sel),
+        "sessions_priced": priced,
+        "sessions_unpriced": sum(unpriced.values()),
+        "unpriced_models": unpriced,
         "usd": usd,
         "usd_share": {k: share(usd[k], tot) for k in KINDS},
-        "usd_derived_total": tot,
-        "usd_api_total": sum(float(r.get("usd") or 0.0) for r in sel),
+        "usd_total": tot,
     }
 
 
@@ -189,7 +222,7 @@ def report(doc: dict[str, Any], w_write: float) -> dict[str, Any]:
         "truncated": bool(doc.get("truncated")),
         "write_weight": w_write,
         "all": token_stats(rows, w_write),
-        "usd_split_opus_5_5": usd_shares(rows),
+        "usd_split_list": usd_shares(rows),
         "interactive": interactive_stats(rows),
         "relays": relay_stats(rows),
     }
@@ -220,12 +253,14 @@ def print_text(res: dict[str, Any]) -> None:
     print(
         f"ITE total {a['ite_total'] / 1e9:.2f} billion (write weight {res['write_weight']})"
     )
-    u = res["usd_split_opus_5_5"]
-    shares = " · ".join(f"{LABELS[k]} {pct(u['usd_share'][k])}" for k in KINDS)
+    u = res["usd_split_list"]
     print(
-        f"USD split, {u['model']} ({u['sessions']} sessions, derived ${u['usd_derived_total']:,.0f}"
-        f" vs API ${u['usd_api_total']:,.0f}): {shares}"
+        f"list-price USD ({u['sessions_priced']} sessions priced,"
+        f" {u['sessions_unpriced']} unpriced {u['unpriced_models'] or ''}):"
     )
+    for k in KINDS:
+        print(f"  {LABELS[k]:<12} ${u['usd'][k]:>9,.0f} {pct(u['usd_share'][k]):>7}")
+    print(f"  {'total':<12} ${u['usd_total']:>9,.0f}")
     i = res["interactive"]
     print(
         f"interactive {i['sessions']}: median start {i['median_ctx_start']:,.0f}"
