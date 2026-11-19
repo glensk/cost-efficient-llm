@@ -378,11 +378,11 @@
     <h2>Context grows in a line. <em>The bill grows in a parabola.</em></h2>
   </header>
   <div class="body" style="gap:6px">
-    <svg id="quadfig" viewBox="0 0 1152 408" width="1152" height="408" role="img" aria-label="Left: context per request grows linearly to 1M tokens, or saw-tooth with relays at 150k. Right: cumulative re-read cost, quadratic without relays, near-linear with relays."></svg>
+    <svg id="quadfig" viewBox="0 0 1152 408" width="1152" height="408" role="img" aria-label="Left: context per request grows linearly to 1M tokens, or saw-tooth with relays at 150k; the re-read bill is the shaded area under the line (times 0.1), a triangle, so twice as long means four times the area; with relays it is a row of small teeth. Right: cumulative re-read cost, quadratic without relays, near-linear with relays."></svg>
   </div>
   <p class="home">Double the session, 4&times; the re-read bill. A relay turns the parabola back into a line.</p>
   <aside class="notes">
-    <p>Say: Left, the context grows by about 1.8k per request; at 1M, today's context window, that is 522 requests. Right, the sum of all re-reads: every request re-reads a bit more than the last, so the sum is a parabola. With a relay at 150k we restart at 50k and pay a fee each time: almost a straight line. Factor 4.4 at the end.</p>
+    <p>Say: Left, the context grows by about 1.8k per request; at 1M, today's context window, that is 522 requests. Each request pays a tenth of its context, so the bill is the area under this line. A line makes a triangle: double the length, four times the area. That is the parabola on the right. A relay cuts the triangle into small teeth: with a relay at 150k we restart at 50k and pay a fee each time, almost a straight line. Factor 4.4 at the end.</p>
     <p>Model: c_k = c_0 + g k, c_0 50k, g 1.82k (mean growth per request, 3,586 work requests in 9 chains: relay-research 2026-11-02-main-handover-cost.md B3). reads(k) &asymp; 0.1 c_0 k + 0.05 g k&sup2;: 27.4M ITE at k = 522. Relay at 150k back to c_0, fee r = 120k (fast-path relay, relay deck slide 8): 9 relays, 6.2M. Factor 4.4. Only re-reads and relay fees are counted; new tokens and output are the same either way. The studies distinguish s_0 (first request) and c_0 = s_0 + 9k.</p>
   </aside>
 </section>
@@ -1007,11 +1007,14 @@ function buildQuad() {
     if (k % 2 === 0 || k === K) dR += (k ? 'L' : 'M') + RX(k).toFixed(1) + ' ' + RY(cum).toFixed(1);
   }
   const noRel = cum;
+  // the re-read bill is the area under the context line (each request pays 0.1 x its context)
+  const areaG = el('g', {'data-step': 2}, svg), relG = el('g', {'data-step': 4}, svg);
+  el('path', {d: `M${LX(0)} ${L.y0} L` + dL.slice(1) + `L${LX(K)} ${L.y0}Z`, fill: C.coldT, opacity: 0.85}, areaG);
   const s1 = el('g', {'data-step': 1}, svg);
   el('path', {class: 'draw slow', pathLength: 1, d: dL, fill: 'none', stroke: C.hot, 'stroke-width': 4}, s1);
   el('text', {x: LX(K) - 4, y: LY(1e6) + 26, 'text-anchor': 'end', 'font-size': 18, fill: C.hot, 'font-weight': 600}, s1, '1M after 522 requests');
   el('text', {x: LX(40), y: LY(140e3) - 8, 'font-size': 17, fill: C.hot, transform: `rotate(-31.5 ${LX(40)} ${LY(140e3) - 8})`}, s1, '+1.82k per request');
-  const s2 = el('g', {'data-step': 2}, svg);
+  const s2 = el('g', {'data-step': 3}, svg);
   el('path', {class: 'draw slow', pathLength: 1, d: dR, fill: 'none', stroke: C.hot, 'stroke-width': 4}, s2);
   el('text', {x: RX(K) - 34, y: RY(noRel) + 6, 'text-anchor': 'end', 'font-size': 36, fill: C.hot, class: 'cond', 'data-count': noRel / 1e6, 'data-fmt': 'M1'}, s2, fmtK(noRel));
   el('text', {x: RX(K) - 50, y: RY(noRel) + 28, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, s2, 'no relay');
@@ -1035,7 +1038,22 @@ function buildQuad() {
     void cPrev;
   }
   dL2 += 'L' + LX(K).toFixed(1) + ' ' + LY(c).toFixed(1);
-  const s3 = el('g', {'data-step': 3}, svg);
+  el('path', {d: `M${LX(0)} ${L.y0} L` + dL2.slice(1) + `L${LX(K)} ${L.y0}Z`, fill: C.green, opacity: 0.3}, relG);
+  // annotation: bill = area; inset: 2x longer -> 4x the area
+  const ann = el('g', {'data-step': 2}, svg);
+  el('text', {x: L.x1 - 8, y: 205, 'text-anchor': 'end', 'font-size': 17, 'font-weight': 700, fill: C.cold}, ann, 'bill = area under the line');
+  el('text', {x: L.x1 - 8, y: 227, 'text-anchor': 'end', 'font-size': 17, fill: C.cold}, ann, '(× 0.1)');
+  const ins = el('g', {transform: 'translate(82 34)'}, ann);
+  el('rect', {x: 0, y: 0, width: 212, height: 126, fill: '#fff', stroke: C.rule, 'stroke-width': 1.5}, ins);
+  el('text', {x: 106, y: 21, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: C.ink}, ins, '2× longer → 4× the area');
+  const ta = 40, th = 30, bx = 18, by = 100;
+  el('path', {d: `M${bx} ${by} L${bx + ta} ${by} L${bx + ta} ${by - th}Z`, fill: C.cold}, ins);
+  el('path', {d: `M${bx} ${by} L${bx + 2 * ta} ${by} L${bx + 2 * ta} ${by - 2 * th}Z M${bx + ta} ${by} L${bx + ta} ${by - th} L${bx + 2 * ta} ${by - th} M${bx + ta} ${by} L${bx + 2 * ta} ${by - th}`, fill: 'none', stroke: C.cold, 'stroke-width': 1.5}, ins);
+  el('text', {x: bx + ta, y: by + 18, 'text-anchor': 'middle', 'font-size': 14, fill: C.ink2, class: 'mono'}, ins, 'k');
+  el('text', {x: bx + 2 * ta, y: by + 18, 'text-anchor': 'middle', 'font-size': 14, fill: C.ink2, class: 'mono'}, ins, '2k');
+  el('text', {x: 110, y: 66, 'font-size': 14, fill: C.ink2}, ins, 'to k: 1 piece');
+  el('text', {x: 110, y: 88, 'font-size': 14, fill: C.ink2}, ins, 'to 2k: 4 pieces');
+  const s3 = el('g', {'data-step': 4}, svg);
   el('line', {x1: L.x0, y1: LY(F), x2: L.x1, y2: LY(F), stroke: C.green, 'stroke-width': 1.5, 'stroke-dasharray': '6 5'}, s3);
   el('path', {class: 'draw slow', pathLength: 1, d: dL2, fill: 'none', stroke: C.green, 'stroke-width': 3}, s3);
   el('text', {x: L.x1, y: LY(F) - 30, 'text-anchor': 'end', 'font-size': 18, fill: C.green, 'font-weight': 600}, s3, 'relay at 150k → back to c₀ = 50k');
