@@ -706,7 +706,7 @@
   <div class="body" style="gap:4px">
     <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 200k, cap 400k; subagents warn 110k, due 150k, force 165k; dots mark the whole bill vs. relaying at the optimum (9 real session chains replayed): 200k +6%, 300k +21%, 500k +60%, 1M +135%."></svg>
   </div>
-  <p class="home">Too early is worst, a bit late is cheap; relaying only at 1M adds ~135% to the whole bill.</p>
+  <p class="home">Too early is worst, a bit late is cheap; waiting until 500k adds ~60% to the whole bill.</p>
   <aside class="notes">
     <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 200k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k. The dots are the whole bill, not the curve height: relaying at 200k instead of the optimum costs about 6% more on the whole bill, at 300k 21%, at 500k 60%, at 1M 135%.</p>
     <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. The curve is only fee + re-reads per request (its height ratio at 1M is +354%); the dots are the whole bill (output and new writes included). Measured: replay of the 9 real chains (main-handover-cost.md B3, b_replay.py), re-run 2026-11-20 with fixed relay points and the force threshold raised above each point; whole bill vs. the best fixed relay point of the replay (130k / 150k for a 41k / 51k successor start), mean of the two starts: 200k +6% (+4 to +8%), 300k +21% (+18 to +23%), 500k +60% (+56 to +65%), 1M +135% (+127 to +143%); force at 450k only +45 to +53%. Rules: cc-relay.py -T (floor 150k, force 200k (CC_RELAY_FORCE; code default 350k), cap 400k), subagent band 110 / 150 / 165k.</p>
@@ -1131,9 +1131,9 @@ function buildU() {
   el('text', {x: x0 + 8, y: y1 + 6, 'font-size': 17, fill: C.ink2}, ax, '');
   el('text', {x: 0, y: 120, 'font-size': 17, fill: C.ink2}, ax, 'ITE per');
   el('text', {x: 0, y: 140, 'font-size': 17, fill: C.ink2}, ax, 'request');
-  [50e3, 100e3, 150e3, 200e3, 400e3, 1e6].forEach(cc => {
+  [50e3, 100e3, 150e3, 200e3, 300e3, 400e3, 500e3, 1e6].forEach(cc => {
     el('line', {x1: X(cc), y1: y0, x2: X(cc), y2: y0 + 6, stroke: C.ink}, ax);
-    if (cc !== 400e3) el('text', {x: X(cc), y: y0 + 24, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, cc === 1e6 ? '1M' : cc / 1e3 + 'k');
+    el('text', {x: X(cc), y: y0 + 24, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, cc === 1e6 ? '1M' : cc / 1e3 + 'k');
   });
   el('text', {x: x1, y: y0 + 46, 'text-anchor': 'end', 'font-size': 16, fill: C.ink2}, ax, 'relay point: context at hand-over (log scale) →');
   // band
@@ -1182,7 +1182,8 @@ function buildU() {
     const top = cc === hi;  // 1M: curve leaves the plot, label goes below the dot, right-aligned
     el('text', {x: top ? x1 : X(cc) - 10, y: top ? cy + 40 : cy - 8, 'text-anchor': 'end', 'font-size': 19, 'font-weight': 700, fill: C.ink}, wb, t);
   });
-  el('text', {x: x0 + 130, y: 36, 'font-size': 16, fill: C.ink2}, wb, '● whole bill vs. relaying at the optimum (9 real session chains replayed)');
+  el('rect', {x: 494, y: 21, width: 526, height: 22, fill: '#E9EDF0'}, wb);
+  el('text', {x: 500, y: 37, 'font-size': 16, fill: C.ink2}, wb, '● whole bill vs. relaying at the optimum (9 real session chains replayed)');
   // callout
   const co = el('g', {'data-step': 3}, svg);
   el('rect', {x: 222, y: 62, width: 450, height: 62, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
