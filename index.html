@@ -578,20 +578,20 @@
         </ul>
       </div>
       <div class="card ok rise" data-step="1" style="border-top:4px solid var(--green)">
-        <h3 style="color:var(--green)">Ask for this instead</h3>
+        <h3 style="color:var(--green)">Set it up once</h3>
         <ul class="acts">
-          <li>Read line ranges; <code>grep</code> with a cap</li>
-          <li><code>df.head()</code>, shapes, summaries</li>
-          <li>Pipe noisy commands through <code>tail -n 40</code></li>
-          <li>Strip notebook outputs before reading</li>
-          <li>Ask for a diff, not a rewrite</li>
+          <li><code>nbstripout</code> git filter: no notebook outputs</li>
+          <li>Scripts log to a file, print a summary</li>
+          <li>CLAUDE.md: cap greps, tail logs, diffs</li>
+          <li>Data and results outside the agent's repo</li>
+          <li>Print <code>df.head()</code> and shapes, not the frame</li>
         </ul>
       </div>
     </div>
   </div>
   <p class="home">Every 10k you let in early costs ~120k ITE by the end, 12&times; its size: print little, read narrowly.</p>
   <aside class="notes">
-    <p>Say: A token is written once at 2&times; and then re-read at 0.1&times; on every later request (backup slide 17). Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. Ask the agent to look at line ranges, heads, tails, and to answer with diffs.</p>
+    <p>Say: A token is written once at 2&times; and then re-read at 0.1&times; on every later request (backup slide 17). Whatever a tool prints lands in the context, is written once and re-read on every later request. A notebook with base64 images or a 5,000-line log is the classic. The agent already reads code narrowly on its own; the bloat comes from what your files and scripts contain and print. So fix it once in the setup: strip notebook outputs, make scripts quiet, and put one standing line in the instruction file (cap greps, tail noisy commands, answer with diffs).</p>
     <p>120k = 10k &times; (2 + 0.1 &times; 100 later requests), backup slide 17, illustrative. For notebooks: nbstripout or <code>jupyter nbconvert --clear-output</code> before the agent reads them.</p>
   </aside>
 </section>
@@ -704,12 +704,12 @@
     <h2>Too early is worst. <em>A bit late is cheap.</em></h2>
   </header>
   <div class="body" style="gap:4px">
-    <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 350k, cap 400k; subagents warn 110k, due 150k, force 165k."></svg>
+    <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 200k, cap 400k; subagents warn 110k, due 150k, force 165k."></svg>
   </div>
-  <p class="home">Too early is worst, a bit late is cheap, never is +40%.</p>
+  <p class="home">Too early is worst, a bit late is cheap; never relaying costs ~40% more than at ~100&ndash;120k.</p>
   <aside class="notes">
-    <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 350k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k.</p>
-    <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. Measured replay of 9 real chains (whole bill, main-handover-cost.md B3): relay at 80k +14 to +42%, at 250k +7 to +9%, never (force at 450k only) +37 to +42%. Rules: cc_relay.py docstring (floor 150k, force 350k = min(350k, cap 400k &minus; 50k)), subagent band 110 / 150 / 165k.</p>
+    <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 200k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k.</p>
+    <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. Measured replay of 9 real chains (main-handover-cost.md B3): whole bill of each policy vs. the same chains relayed exactly at today's due point (98k / 118k for a 41k / 51k successor start; the best fixed point, 130-150k, is another 4-6% cheaper): relay at 80k +14 to +42%, at 250k +7 to +9%, never (force at 450k only) +37 to +42%. Rules: cc-relay.py -T (floor 150k, force 200k (CC_RELAY_FORCE; code default 350k), cap 400k), subagent band 110 / 150 / 165k.</p>
   </aside>
 </section>
 
@@ -1131,9 +1131,9 @@ function buildU() {
   el('text', {x: x0 + 8, y: y1 + 6, 'font-size': 17, fill: C.ink2}, ax, '');
   el('text', {x: 0, y: 120, 'font-size': 17, fill: C.ink2}, ax, 'ITE per');
   el('text', {x: 0, y: 140, 'font-size': 17, fill: C.ink2}, ax, 'request');
-  [50e3, 100e3, 150e3, 200e3, 350e3, 400e3, 1e6].forEach(cc => {
+  [50e3, 100e3, 150e3, 200e3, 400e3, 1e6].forEach(cc => {
     el('line', {x1: X(cc), y1: y0, x2: X(cc), y2: y0 + 6, stroke: C.ink}, ax);
-    if (cc !== 350e3 && cc !== 400e3) el('text', {x: X(cc), y: y0 + 24, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, cc === 1e6 ? '1M' : cc / 1e3 + 'k');
+    if (cc !== 400e3) el('text', {x: X(cc), y: y0 + 24, 'text-anchor': 'middle', 'font-size': 15, fill: C.ink3, class: 'mono'}, ax, cc === 1e6 ? '1M' : cc / 1e3 + 'k');
   });
   el('text', {x: x1, y: y0 + 46, 'text-anchor': 'end', 'font-size': 16, fill: C.ink2}, ax, 'relay point: context at hand-over (log scale) →');
   // band
@@ -1162,11 +1162,11 @@ function buildU() {
   const RY1 = 320, RY2 = 376;
   el('text', {x: 0, y: RY1 + 5, 'font-size': 18, 'font-weight': 600, fill: C.ink}, ru, 'main');
   el('line', {x1: X(lo), y1: RY1, x2: x1, y2: RY1, stroke: C.rule, 'stroke-width': 8}, ru);
-  el('line', {x1: X(150e3), y1: RY1, x2: X(350e3), y2: RY1, stroke: C.green, 'stroke-width': 8}, ru);
-  el('line', {x1: X(350e3), y1: RY1, x2: X(400e3), y2: RY1, stroke: C.hot, 'stroke-width': 8}, ru);
-  [[150e3, 'floor/due 150k', C.green], [350e3, 'force 350k', C.hot], [400e3, 'cap 400k', C.red || '#A6362B']].forEach(([cc, t, col], j) => {
+  el('line', {x1: X(150e3), y1: RY1, x2: X(200e3), y2: RY1, stroke: C.green, 'stroke-width': 8}, ru);
+  el('line', {x1: X(200e3), y1: RY1, x2: X(400e3), y2: RY1, stroke: C.hot, 'stroke-width': 8}, ru);
+  [[150e3, 'floor/due 150k', C.green], [200e3, 'force 200k', C.hot], [400e3, 'cap 400k', C.red || '#A6362B']].forEach(([cc, t, col], j) => {
     el('line', {x1: X(cc), y1: y1, x2: X(cc), y2: y0, stroke: col, 'stroke-width': 1.5, 'stroke-dasharray': '4 4'}, ru);
-    el('text', {x: X(cc) + (j === 2 ? 8 : -6), y: RY1 + 28, 'text-anchor': j === 2 ? 'start' : 'end', 'font-size': 16, fill: col, 'font-weight': 600, class: 'mono'}, ru, t);
+    el('text', {x: X(cc) + (j === 0 ? -6 : 8), y: RY1 + 28, 'text-anchor': j === 0 ? 'end' : 'start', 'font-size': 16, fill: col, 'font-weight': 600, class: 'mono'}, ru, t);
   });
   el('text', {x: 0, y: RY2 + 5, 'font-size': 18, 'font-weight': 600, fill: C.ink}, ru, 'subagents');
   el('line', {x1: X(lo), y1: RY2, x2: x1, y2: RY2, stroke: C.rule, 'stroke-width': 8}, ru);
@@ -1176,11 +1176,14 @@ function buildU() {
   el('text', {x: X(165e3) + 6, y: RY2 + 28, 'font-size': 16, fill: C.hot, class: 'mono', 'font-weight': 600}, ru, 'due 150k · force 165k');
   // callout
   const co = el('g', {'data-step': 3}, svg);
-  el('rect', {x: 250, y: 20, width: 500, height: 104, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
-  el('text', {x: 266, y: 48, 'font-size': 18, 'font-weight': 700, fill: C.ink}, co, 'Why is the left side high?');
-  el('text', {x: 266, y: 74, 'font-size': 17, fill: C.ink2}, co, 'Each relay pays a fee: mostly the new session writing');
-  el('text', {x: 266, y: 96, 'font-size': 17, fill: C.ink2}, co, 'its start context at 2×. Relay early = few requests');
-  el('text', {x: 266, y: 118, 'font-size': 17, fill: C.ink2}, co, 'share it. Real replays: never relaying = +37–42%.');
+  el('rect', {x: 222, y: 2, width: 540, height: 148, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
+  el('text', {x: 238, y: 26, 'font-size': 18, 'font-weight': 700, fill: C.ink}, co, 'Why is the left side high?');
+  el('text', {x: 238, y: 48, 'font-size': 16, fill: C.ink2}, co, 'Each relay pays a fee: mostly the new session writing its');
+  el('text', {x: 238, y: 68, 'font-size': 16, fill: C.ink2}, co, 'start context at 2×. Relay early = few requests share it.');
+  el('line', {x1: 238, y1: 80, x2: 746, y2: 80, stroke: C.rule, 'stroke-width': 1}, co);
+  el('text', {x: 238, y: 100, 'font-size': 16, 'font-weight': 700, fill: C.ink}, co, 'Measured: 9 real session chains replayed, whole bill');
+  el('text', {x: 238, y: 120, 'font-size': 16, fill: C.ink2}, co, 'vs. the same chains relayed at ~100–120k:');
+  el('text', {x: 238, y: 141, 'font-size': 16, fill: C.ink, class: 'mono'}, co, 'at 80k +14–42% · at 250k +7–9% · never +37–42%');
 }
 
 /* ---------- slide 16: duel ---------- */
