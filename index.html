@@ -704,12 +704,12 @@
     <h2>Too early is worst. <em>A bit late is cheap.</em></h2>
   </header>
   <div class="body" style="gap:4px">
-    <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 200k, cap 400k; subagents warn 110k, due 150k, force 165k."></svg>
+    <svg id="ufig" viewBox="0 0 1152 418" width="1152" height="418" role="img" aria-label="U-shaped cost per request against the relay point, log axis to 1M tokens; flat band about 94-150k; our rules: main floor 150k, force 200k, cap 400k; subagents warn 110k, due 150k, force 165k; dots mark the whole bill vs. relaying at the optimum (9 real session chains replayed): 200k +6%, 300k +21%, 500k +60%, 1M +135%."></svg>
   </div>
-  <p class="home">Too early is worst, a bit late is cheap; never relaying costs ~40% more than at ~100&ndash;120k.</p>
+  <p class="home">Too early is worst, a bit late is cheap; relaying only at 1M adds ~135% to the whole bill.</p>
   <aside class="notes">
-    <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 200k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k.</p>
-    <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. Measured replay of 9 real chains (main-handover-cost.md B3): whole bill of each policy vs. the same chains relayed exactly at today's due point (98k / 118k for a 41k / 51k successor start; the best fixed point, 130-150k, is another 4-6% cheaper): relay at 80k +14 to +42%, at 250k +7 to +9%, never (force at 450k only) +37 to +42%. Rules: cc-relay.py -T (floor 150k, force 200k (CC_RELAY_FORCE; code default 350k), cap 400k), subagent band 110 / 150 / 165k.</p>
+    <p>Say: Cost per request as a function of where you relay. Left: relay too early and the fee, mostly the new session writing its start context at 2&times;, is spread over few requests. Right: wait too long and the re-reads dominate. The bottom is flat: anywhere in the band costs at most 5% more. Our hooks never relay a main session below 150k, force at 200k, hard cap 400k; subagents warn at 110k, are due at 150k and forced at 165k. The dots are the whole bill, not the curve height: relaying at 200k instead of the optimum costs about 6% more on the whole bill, at 300k 21%, at 500k 60%, at 1M 135%.</p>
+    <p>Model: f = r/k + 0.05 g k + 0.1 c_0 with k = (c &minus; c_0)/g, c_0 50k, g 1.82k, r 120k (fast-path fee; the studies' optimum 137k used the older fee 209k): minimum c* &asymp; 116k, &le; 5% band 94-150k. The curve is only fee + re-reads per request (its height ratio at 1M is +354%); the dots are the whole bill (output and new writes included). Measured: replay of the 9 real chains (main-handover-cost.md B3, b_replay.py), re-run 2026-11-20 with fixed relay points and the force threshold raised above each point; whole bill vs. the best fixed relay point of the replay (130k / 150k for a 41k / 51k successor start), mean of the two starts: 200k +6% (+4 to +8%), 300k +21% (+18 to +23%), 500k +60% (+56 to +65%), 1M +135% (+127 to +143%); force at 450k only +45 to +53%. Rules: cc-relay.py -T (floor 150k, force 200k (CC_RELAY_FORCE; code default 350k), cap 400k), subagent band 110 / 150 / 165k.</p>
   </aside>
 </section>
 
@@ -1174,16 +1174,20 @@ function buildU() {
   el('line', {x1: X(150e3), y1: RY2, x2: X(165e3), y2: RY2, stroke: C.hot, 'stroke-width': 8}, ru);
   el('text', {x: X(110e3) - 6, y: RY2 + 28, 'text-anchor': 'end', 'font-size': 16, fill: C.gold, class: 'mono', 'font-weight': 600}, ru, 'warn 110k');
   el('text', {x: X(165e3) + 6, y: RY2 + 28, 'font-size': 16, fill: C.hot, class: 'mono', 'font-weight': 600}, ru, 'due 150k · force 165k');
+  // whole-bill markers: replay of 9 real chains, total vs. the best fixed relay point
+  const wb = el('g', {'data-step': 2}, svg);
+  [[200e3, '+6%'], [300e3, '+21%'], [500e3, '+60%'], [1e6, '+135%']].forEach(([cc, t]) => {
+    const cy = Y(f(cc));
+    el('circle', {cx: X(cc), cy, r: 6, fill: C.ink, stroke: '#fff', 'stroke-width': 2}, wb);
+    const top = cc === hi;  // 1M: curve leaves the plot, label goes below the dot, right-aligned
+    el('text', {x: top ? x1 : X(cc) - 10, y: top ? cy + 40 : cy - 8, 'text-anchor': 'end', 'font-size': 19, 'font-weight': 700, fill: C.ink}, wb, t);
+  });
+  el('text', {x: x0 + 130, y: 36, 'font-size': 16, fill: C.ink2}, wb, '● whole bill vs. relaying at the optimum (9 real session chains replayed)');
   // callout
   const co = el('g', {'data-step': 3}, svg);
-  el('rect', {x: 222, y: 2, width: 540, height: 148, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
-  el('text', {x: 238, y: 26, 'font-size': 18, 'font-weight': 700, fill: C.ink}, co, 'Why is the left side high?');
-  el('text', {x: 238, y: 48, 'font-size': 16, fill: C.ink2}, co, 'Each relay pays a fee: mostly the new session writing its');
-  el('text', {x: 238, y: 68, 'font-size': 16, fill: C.ink2}, co, 'start context at 2×. Relay early = few requests share it.');
-  el('line', {x1: 238, y1: 80, x2: 746, y2: 80, stroke: C.rule, 'stroke-width': 1}, co);
-  el('text', {x: 238, y: 100, 'font-size': 16, 'font-weight': 700, fill: C.ink}, co, 'Measured: 9 real session chains replayed, whole bill');
-  el('text', {x: 238, y: 120, 'font-size': 16, fill: C.ink2}, co, 'vs. the same chains relayed at ~100–120k:');
-  el('text', {x: 238, y: 141, 'font-size': 16, fill: C.ink, class: 'mono'}, co, 'at 80k +14–42% · at 250k +7–9% · never +37–42%');
+  el('rect', {x: 222, y: 62, width: 450, height: 62, fill: '#fff', stroke: C.ink, 'stroke-width': 1.5}, co);
+  el('text', {x: 238, y: 86, 'font-size': 18, 'font-weight': 700, fill: C.ink}, co, 'Why is the left side high?');
+  el('text', {x: 238, y: 110, 'font-size': 16, fill: C.ink2}, co, 'Every relay costs a fee. Relay early = few requests share it.');
 }
 
 /* ---------- slide 16: duel ---------- */
