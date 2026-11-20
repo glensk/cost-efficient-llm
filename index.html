@@ -74,6 +74,7 @@
   .draw{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1)}
   .on>.draw,.draw.on{stroke-dashoffset:0}
   .draw.slow{transition-duration:2.4s}
+  @media print{[data-until]{display:none!important}}
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{transition:none!important;animation:none!important}
   }
@@ -352,7 +353,7 @@
   </div>
   <p class="home">You type 1 prompt, the agent makes ~25 requests, and each re-reads everything before it.</p>
   <aside class="notes">
-    <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows. In the first requests the write of new tokens dominates; by request 50 the re-read is the largest part, and by 200 it is almost everything.</p>
+    <p>Say: Request 1 already carries tools, system prompt, instructions and your prompt. The model answers with a tool call; the tool runs; its result goes back in request 2, which re-sends everything again. Example: you type "What did Adam write in his mail?"; request 1 ends with the tool call "list mails", request 2 carries the list and ends with "read mail", request 3 carries the mail's text and gives the answer. Your one question is three requests here, in real sessions about 25. Bottom row: what each request costs. The write part depends on what is new; the read part only grows. In the first requests the write of new tokens dominates; by request 50 the re-read is the largest part, and by 200 it is almost everything.</p>
     <p>Sources: ~25 requests per typed prompt = median of interactive sessions that record a prompt count (n = 11 of 178; pooled ratio 24.4), decide relay-cost API, scripts/relay_cost_stats.py, run 2026-11-19 12:17. Bar sizes illustrative (tools + system 12k read warm from earlier sessions, instructions 8k, prompts 2k, tool call 0.5k, tool result 6k, answer 1k). Definition of k_A here is an assumption to confirm. The two later bars (k = 50, 200) follow the slide-5 model: c_k = 50k + 1.82k k (141k, 414k), 1.8k new (written 2&times;) and 0.5k output (5&times;) per request; mean output per request in the 30-day data is 0.53k. k = 50: read 14.1k + write 3.6k + output 2.5k = 20.2k; k = 200: 41.4k + 3.6k + 2.5k = 47.5k.</p>
   </aside>
 </section>
@@ -837,8 +838,9 @@ function buildStack() {
   const svg = document.getElementById('stackfig');
   // per request: parts sent (k tokens), new = written this request, out = output of the request
   const reqs = [
-    {ask: 1, parts: [['tools + system', 12, 'read'], ['instructions', 8, 'new'], ['your prompt', 2, 'new']], out: ['tool call', 0.5]},
-    {ask: 1, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
+    // ask 1 is the worked example "What did Adam write in his mail?": out[2] = what the tool call does
+    {ask: 1, parts: [['tools + system', 12, 'read'], ['instructions', 8, 'new'], ['your prompt', 2, 'new']], out: ['tool call', 0.5, 'list mails']},
+    {ask: 1, add: [['tool call + result', 6.5]], out: ['tool call', 0.5, 'read mail']},
     {ask: 1, add: [['tool call + result', 6.5]], out: ['answer', 1]},
     {ask: 2, add: [['answer + prompt 2', 3]], out: ['tool call', 0.5]},
     {ask: 2, add: [['tool call + result', 6.5]], out: ['tool call', 0.5]},
@@ -870,11 +872,22 @@ function buildStack() {
         wrote += s[0];
       }
     });
+    // the blue part of bar i is all of bar i-1: dashed line from the top of bar i-1, label inside the blue
+    if (i > 0) {
+      const yt = BASE - prev * PX;
+      el('line', {x1: x - DX + W, y1: yt, x2: x, y2: yt, stroke: C.cold, 'stroke-width': 1.5, 'stroke-dasharray': '4 3'}, g);
+      const ym = (yt + BASE) / 2;
+      el('text', {x: x + W / 2, y: ym - 2, 'text-anchor': 'middle', 'font-size': 12, fill: C.cold}, g, '= request');
+      el('text', {x: x + W / 2, y: ym + 12, 'text-anchor': 'middle', 'font-size': 12, fill: C.cold}, g, String(i));
+    }
     prev = read + wrote;
     // output marker
     const oy = y - 8 - 12;
     el('rect', {x: x + 8, y: oy, width: W - 16, height: 12, fill: C.out, rx: 2}, g);
-    el('text', {x: x + W / 2, y: oy - 7, 'text-anchor': 'middle', 'font-size': 15, fill: C.out}, g, q.out[0]);
+    if (q.out[2]) {
+      el('text', {x: x + W / 2, y: oy - 22, 'text-anchor': 'middle', 'font-size': 15, fill: C.out}, g, q.out[0] + ':');
+      el('text', {x: x + W / 2, y: oy - 6, 'text-anchor': 'middle', 'font-size': 14, fill: C.out, class: 'mono'}, g, q.out[2]);
+    } else el('text', {x: x + W / 2, y: oy - 7, 'text-anchor': 'middle', 'font-size': 15, fill: C.out}, g, q.out[0]);
     el('text', {x: x + W / 2, y: BASE + 24, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 600, fill: C.ink}, g, 'k = ' + (i + 1));
     iteBar(x, read * 0.1, wrote * 2, q.out[1] * 5, 3, false);
   });
@@ -912,7 +925,8 @@ function buildStack() {
   // annotations for request 1
   const a = el('g', {'data-step': 0}, svg);
   el('text', {x: 176, y: BASE - 14, 'text-anchor': 'end', 'font-size': 16, fill: C.cold}, a, 'tools + system');
-  el('text', {x: 176, y: BASE - 50, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, a, 'instructions');
+  el('text', {x: 176, y: BASE - 51, 'text-anchor': 'end', 'font-size': 16, fill: C.hot}, a, 'instructions');
+  el('text', {x: 176, y: BASE - 35, 'text-anchor': 'end', 'font-size': 15, fill: C.hot}, a, '(CLAUDE.md)');
   el('text', {x: 176, y: BASE - 69, 'text-anchor': 'end', 'font-size': 16, fill: C.hot, 'font-weight': 600}, a, 'your prompt →');
   const dl = el('g', {'data-step': 0}, svg);
   el('text', {x: 0, y: BASE + 24, 'font-size': 16, fill: C.ink2}, dl, 'request = model call');
@@ -935,6 +949,40 @@ function buildStack() {
   el('text', {x: 0, y: IBASE - 56, 'font-size': 19, 'font-weight': 600, fill: C.ink}, lab, 'ITE of the request');
   el('text', {x: 0, y: IBASE - 34, 'font-size': 15, fill: C.hot}, lab, 'early: writes dominate');
   el('text', {x: 0, y: IBASE - 12, 'font-size': 15, fill: C.cold, 'font-weight': 600, 'data-step': 4}, svg, 'later: re-reads dominate');
+  // worked example for ask 1, only at step 1 (bars k = 4..7 take this area from step 2 on)
+  const ex = el('g', {'data-step': 1, 'data-until': 1}, svg);
+  const PXL = 500;
+  const IND = 52;  // continuation lines start under the text after "k = n"
+  const line = (y, parts, opt) => {
+    const o = opt || {};
+    const t = el('text', {x: PXL + (o.ind ? IND : 0), y, 'font-size': o.size || 15, fill: C.ink2}, ex);
+    parts.forEach(p => {
+      const ts = el('tspan', {}, t, typeof p === 'string' ? p : p[0]);
+      if (typeof p !== 'string') { ts.setAttribute('fill', p[1]); if (p[2]) ts.setAttribute('font-weight', p[2]); }
+    });
+    return t;
+  };
+  const kt = (y, n) => el('text', {x: PXL, y, 'font-size': 15, fill: C.ink, 'font-weight': 600}, ex, 'k = ' + n);
+  const o2 = BASE - 25 * PX, o3 = BASE - 31.75 * PX;  // mid-height of the orange part of bars 2 and 3
+  // the k = 2 arrow must pass above bar 3 and its label (y < 68): its line sits at the top
+  line(22, ['Example, you type: ', ['"What did Adam write in his mail?"', C.ink, 600]], {size: 17});
+  kt(44, 1);
+  line(44, ['sends ', ['tools + system', C.cold], ', ', ['instructions (CLAUDE.md)', C.hot], ', ', ['your prompt', C.hot],
+    ' → ', ['tool call "list mails"', C.out]], {ind: 1});
+  kt(67, 2);
+  line(67, ['re-sends ', ['all of request 1', C.cold], ' + new: ', ['the tool call and its result,', C.hot]], {ind: 1});
+  line(85, [['the list of mails', C.hot], ' → ', ['tool call "read mail"', C.out]], {ind: 1});
+  kt(o3 + 5, 3);
+  line(o3 + 5, ['re-sends ', ['all of request 2', C.cold], ' + new: ', ['the tool call and its result,', C.hot]], {ind: 1});
+  line(o3 + 23, [['the mail\'s text', C.hot], ' → ', ['the answer', C.out]], {ind: 1});
+  line(o3 + 58, [['One prompt typed, three requests.', C.ink, 600]], {size: 16});
+  // arrows from the k = 2 and k = 3 lines to the orange part of bars 2 and 3
+  const arrow = (d, tx, ty) => {
+    el('path', {d, fill: 'none', stroke: C.hot, 'stroke-width': 1.5}, ex);
+    el('path', {d: `M${tx} ${ty} l8 -4.5 v9 z`, fill: C.hot}, ex);
+  };
+  arrow(`M${PXL - 6} 62 H${X0 + DX + W + 15} V${o2} H${X0 + DX + W + 8}`, X0 + DX + W + 1, o2);
+  arrow(`M${PXL - 6} ${o3} H${X0 + 2 * DX + W + 8}`, X0 + 2 * DX + W + 1, o3);
 }
 
 /* ---------- slide 17 (backup): rent ---------- */
@@ -1206,7 +1254,8 @@ function render(fromNav) {
   slides.forEach((s, k) => s.classList.toggle('active', k === cur));
   slides.forEach((s, k) => {
     s.querySelectorAll('[data-step]').forEach(e => {
-      const on = k === cur && +e.dataset.step <= step;
+      // optional data-until: on only while data-step <= step <= data-until (maxStep ignores it)
+      const on = k === cur && +e.dataset.step <= step && (e.dataset.until === undefined || step <= +e.dataset.until);
       if (on && !e.classList.contains('on')) {
         e.classList.add('on');
         e.querySelectorAll('[data-count]').forEach(runCount);
